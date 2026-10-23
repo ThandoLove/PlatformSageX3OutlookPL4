@@ -1,0 +1,195 @@
+﻿/* THE TASK CARD GRID - SYNCED TRACK WIDTH CONSTRAINTS */
+.task-card {
+    display: grid !important;
+    grid-template-columns: 1.5fr 100px 1fr 100px 150px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 12px 14px !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Responsive stacking for smaller viewports */
+@media (max-width: 900px) {
+    .task-card {
+        grid-template-columns: 1fr 120px !important;
+        grid-auto-rows: auto !important;
+        align-items: start !important;
+    }
+    .card-col.status-group { order: 2; }
+    .card-col.source-group { order: 3; }
+    .card-col.action-group { order: 4; }
+    .card-col.sage-link-group { order: 5; }
+}
+
+@media (max-width: 600px) {
+    .task-card {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 10px !important;
+    }
+    .btn-blue-square-icon, .btn-outline-complete, .btn-ghost-link { width: auto !important; }
+    .card-t { font-size: 14px !important; }
+    .card-c { font-size: 12px !important; }
+}
+
+    .task-card:hover {
+        border-color: #2563eb !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+        transform: translateY(-1px) !important;
+    }
+
+.card-t {
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    color: #0f172a !important;
+    margin-bottom: 2px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.card-c {
+    font-size: 11px !important;
+    color: #64748b !important;
+    font-weight: 400;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.p-chip {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    text-transform: uppercase !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: fit-content !important;
+}
+
+    .p-chip.urgent {
+        background: #fee2e2 !important;
+        color: #b91c1c !important;
+    }
+
+    .p-chip.high {
+        background: #dbeafe !important;
+        color: #2563eb !important;
+    }
+
+    .p-chip.normal, .p-chip.medium {
+        background: #fef3c7 !important;
+        color: #92400e !important;
+    }
+
+.due-text {
+    font-size: 11px !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    margin-top: 4px !important;
+    white-space: nowrap !important;
+}
+
+.red-alert {
+    color: #ef4444 !important;
+    font-weight: 600 !important;
+}
+
+.btn-ghost-link {
+    background: transparent !important;
+    border: none !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    white-space: nowrap !important;
+}
+
+    .btn-ghost-link:hover {
+        background: #f1f5f9 !important;
+        color: #2563eb !important;
+    }
+
+.sage-s-box {
+    background: #2563eb !important;
+    color: white !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+}
+
+.btn-outline-complete {
+    border: 1px solid #cbd5e1 !important;
+    background: white !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    transition: all 0.2s !important;
+    white-space: nowrap !important;
+}
+
+    .btn-outline-complete:hover {
+        border-color: #10b981 !important;
+        color: #10b981 !important;
+        background: #f0fdf4 !important;
+    }
+
+.completed-label {
+    color: #10b981 !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+}
+
+/* COLUMN 5: ICON BOX MASTER BASE PILL CONFIG */
+.btn-blue-square-icon {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 0 12px !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    /* =========================================================================
+       🔥 FIXED WORDS SIZING: CRUSHES OVERSIZED BUTTON TEXT BLOAT
+       ========================================================================= */
+    font-size: 10px !important; /* Shrinks the words down to a crisp density */
+    font-weight: 400 !important; /* Makes the text bold, clean, and legible */
+    letter-spacing: 0.02em !important; /* Spaces out the lettering like a real app */
+    text-transform: uppercase !important; /* Converts text to a clean corporate style */
+    white-space: nowrap !important; /* Prevents the words from wrapping or splitting */
+}
+
+    .btn-blue-square-icon:hover {
+        background-color: #1d4ed8 !important;
+    }

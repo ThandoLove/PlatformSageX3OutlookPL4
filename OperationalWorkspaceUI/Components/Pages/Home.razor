@@ -1,0 +1,116 @@
+﻿@page "/"
+
+@layout EmptyLayout
+@rendermode InteractiveServer
+
+@using OperationalWorkspaceUI.UIServices.System
+@using OperationalWorkspaceUI.Components
+
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject ModalService ModalService  
+
+
+<PageTitle>Sage X3 Workspace</PageTitle>
+
+<div class="landing-page">
+
+    <!-- TOP BAR -->
+    <div class="landing-topbar">
+
+        <div class="brand-area">
+            <img src="/images/sage-x3-logo.png"
+                 class="brand-logo"
+                 alt="Sage X3" />
+
+            <div>
+                <h1>Sage X3 Workspace</h1>
+                <span>Operational Intelligence Platform</span>
+            </div>
+        </div>
+
+        <button class="theme-toggle-btn"
+                @onclick="ToggleTheme">
+
+            <i class="ms-Icon ms-Icon--@(isDark ? "Sunny" : "ClearNight")"></i>
+
+        </button>
+
+    </div>
+
+    <!-- HERO -->
+    <section class="hero-section">
+
+        <div class="hero-content">
+
+            <div class="hero-badge">
+                Outlook + Sage X3 Integration
+            </div>
+
+            <h2>
+                Enterprise Workspace
+                Built For Operations
+            </h2>
+
+            <p>
+                Manage CRM, ERP, emails, workflows,
+                tickets, approvals and operational activity
+                from a single contextual workspace.
+            </p>
+
+            <div class="hero-actions">
+
+                <button class="btn-primary"
+                        @onclick="ShowLogin">
+
+                    <i class="ms-Icon ms-Icon--Forward"></i>
+                    Sign In
+
+                </button>
+
+                <!-- The professional Fluent UI layout action hook -->
+                <button type="button" class="btn-welcome-secondary" @onclick="OpenPlatformDocs">
+                    <i class="ms-Icon ms-Icon--Info"></i> Learn More
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+@code {
+    private bool isDark = false;
+
+    private async Task ToggleTheme()
+    {
+        isDark = !isDark;
+        await JS.InvokeVoidAsync("localStorage.setItem", "theme", isDark ? "dark" : "light");
+        StateHasChanged();
+    }
+
+    private async Task OpenPlatformDocs()
+    {
+        RenderFragment docsFragment = __builder =>
+        {
+            <PlatformDocsDialog />
+        };
+
+        await ModalService.ShowModal(
+            title: "Platform Overview & Architectural Scope",
+            content: docsFragment
+        );
+    }
+
+    private async Task ShowLogin()
+    {
+        await ModalService.ShowModal("Sign In", builder =>
+        {
+            // Dynamically instantiates your LoginForm layout panel when clicked
+            builder.OpenComponent<OperationalWorkspaceUI.Components.Shared.LoginForm>(0);
+            builder.CloseComponent();
+        });
+    }
+}

@@ -1,0 +1,720 @@
+﻿/* =========================================================================
+   SAGE X3 OPERATIONAL WORKSPACE
+   DASHBOARD STYLES
+   ========================================================================= */
+
+/* =========================================================================
+   DASHBOARD ROOT
+   ========================================================================= */
+
+.dashboard-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1600px;
+    min-width: 0;
+    min-height: 0;
+    margin: 0 auto;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+/* =========================================================================
+   DASHBOARD HEADER
+   ========================================================================= */
+
+.dashboard-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+    gap: 16px;
+    box-sizing: border-box;
+}
+
+.header-main-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.header-sub-description {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #64748b;
+}
+
+/* =========================================================================
+   METRICS / KPI AREA
+   ========================================================================= */
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    width: 100%;
+    gap: 10px;
+    min-width: 0;
+}
+
+.flat-layout-cell {
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .flat-layout-cell:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
+    }
+
+.card-label-tiny {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.metric-value {
+    display: block;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.metric-subtext {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: #64748b;
+}
+
+/* =========================================================================
+   CUSTOMER IDENTITY / CONTEXT CARD
+   ========================================================================= */
+
+.customer-context-card {
+    min-width: 0;
+}
+
+    .customer-context-card .identity-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+
+    .customer-context-card .customer-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+/* =========================================================================
+   QUICK ACTIONS
+   ========================================================================= */
+
+.modern-action-strip {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+    .modern-action-strip .strip-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #334155;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+        .modern-action-strip .strip-btn:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+        }
+
+        .modern-action-strip .strip-btn:active {
+            background: #f1f5f9;
+        }
+
+/* =========================================================================
+   MAIN WORKSPACE VIEWPORT
+   ========================================================================= */
+
+.workspace-viewport {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 2px 0;
+    box-sizing: border-box;
+}
+
+/* =========================================================================
+   THREE-COLUMN DESKTOP DASHBOARD
+   ========================================================================= */
+
+.sage-dashboard-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+    .sage-dashboard-row > * {
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* =========================================================================
+   DASHBOARD CARDS
+   ========================================================================= */
+
+    .sage-dashboard-row .flat-layout-cell {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    /*
+ * Components inside the dashboard must be allowed to shrink.
+ * This prevents long text, Fluent components or buttons from pushing the
+ * entire grid wider than the available viewport.
+ */
+
+    .sage-dashboard-row ::deep .dashboard-card,
+    .sage-dashboard-row ::deep .workspace-card,
+    .sage-dashboard-row ::deep .panel-card {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* =========================================================================
+   CHILD COMPONENT SAFETY
+   ========================================================================= */
+
+    .sage-dashboard-row ::deep input,
+    .sage-dashboard-row ::deep textarea,
+    .sage-dashboard-row ::deep select {
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .sage-dashboard-row ::deep button {
+        max-width: 100%;
+    }
+
+    /* =========================================================================
+   EMAIL INSIGHT
+   ========================================================================= */
+
+    .sage-dashboard-row ::deep .email-insight,
+    .sage-dashboard-row ::deep .email-insight-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .sage-dashboard-row ::deep .email-insight-title,
+    .sage-dashboard-row ::deep .email-contact-name,
+    .sage-dashboard-row ::deep .email-company-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* =========================================================================
+   CRM SNAPSHOT
+   ========================================================================= */
+
+    .sage-dashboard-row ::deep .crm-snapshot,
+    .sage-dashboard-row ::deep .crm-snapshot-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* =========================================================================
+   KNOWLEDGE BASE
+   ========================================================================= */
+
+    .sage-dashboard-row ::deep .knowledge-base,
+    .sage-dashboard-row ::deep .knowledge-base-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* =========================================================================
+   DOCUMENTS
+   ========================================================================= */
+
+    .sage-dashboard-row ::deep .documents-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* =========================================================================
+   MY TASKS
+   ========================================================================= */
+
+    .sage-dashboard-row ::deep .my-tasks,
+    .sage-dashboard-row ::deep .tasks-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* =========================================================================
+   ACTIVITY TIMELINE
+   ========================================================================= */
+
+    .sage-dashboard-row ::deep .activity-timeline,
+    .sage-dashboard-row ::deep .activity-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+/* =========================================================================
+   EMPTY / NO-CONTEXT STATE
+   ========================================================================= */
+
+.empty-context-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    padding: 20px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+    .empty-context-state .empty-title {
+        margin: 0 0 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .empty-context-state .empty-description {
+        max-width: 320px;
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.45;
+        color: #64748b;
+    }
+
+/* =========================================================================
+   TABLET / MEDIUM DESKTOP
+   ========================================================================= */
+
+@media (max-width: 1100px) {
+
+    .dashboard-wrapper {
+        gap: 10px;
+    }
+
+    .dashboard-header {
+        gap: 10px;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sage-dashboard-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+        /*
+     * Allow the final panel to occupy the full row when there is an odd
+     * number of dashboard panels.
+     */
+        .sage-dashboard-row > :last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+        }
+}
+
+/* =========================================================================
+   NARROW BROWSER / TASK PANE BASE
+   ========================================================================= */
+
+/*
+ * This breakpoint is intentionally conservative.
+ *
+ * It provides a fallback for browsers that do not support :has().
+ * The actual task-pane layout is additionally controlled by
+ * .taskpane-layout-root below.
+ */
+
+@media (max-width: 700px) {
+
+    .dashboard-wrapper {
+        gap: 8px;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .header-main-title {
+        font-size: 1.1rem;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .sage-dashboard-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+        .sage-dashboard-row > :last-child:nth-child(odd) {
+            grid-column: auto;
+        }
+
+    .modern-action-strip {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+        .modern-action-strip .strip-btn {
+            width: 100%;
+        }
+}
+
+/* =========================================================================
+   REAL OUTLOOK TASK PANE
+   ========================================================================= */
+
+/*
+ * IMPORTANT:
+ *
+ * The task pane should NOT be a scaled-down desktop dashboard.
+ *
+ * The dashboard remains full width inside the content area and each panel
+ * gets its own row. MainLayout owns the scrolling.
+ */
+
+.taskpane-layout-root {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+    box-sizing: border-box;
+}
+
+    /* -------------------------------------------------------------------------
+   ROOT DASHBOARD
+   ------------------------------------------------------------------------- */
+
+    .taskpane-layout-root .dashboard-wrapper {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+
+    /* -------------------------------------------------------------------------
+   TASK PANE HEADER
+   ------------------------------------------------------------------------- */
+
+    .taskpane-layout-root .dashboard-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        gap: 2px;
+        padding: 2px 2px 4px;
+        box-sizing: border-box;
+    }
+
+        .taskpane-layout-root .dashboard-header .header-main-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #0f172a;
+        }
+
+        .taskpane-layout-root .dashboard-header .header-sub-description {
+            margin: 0;
+            font-size: 10px;
+            line-height: 1.35;
+            color: #64748b;
+        }
+
+    /* -------------------------------------------------------------------------
+   TASK PANE METRICS
+   ------------------------------------------------------------------------- */
+
+    .taskpane-layout-root .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .taskpane-layout-root .flat-layout-cell {
+        width: 100%;
+        min-width: 0;
+        padding: 8px;
+        border-radius: 7px;
+        box-sizing: border-box;
+    }
+
+    .taskpane-layout-root .card-label-tiny {
+        margin-bottom: 3px;
+        font-size: 8px;
+    }
+
+    .taskpane-layout-root .metric-value {
+        font-size: 15px;
+    }
+
+    .taskpane-layout-root .metric-subtext {
+        margin-top: 3px;
+        font-size: 9px;
+    }
+
+    /* -------------------------------------------------------------------------
+   TASK PANE QUICK ACTIONS
+   ------------------------------------------------------------------------- */
+
+    .taskpane-layout-root .modern-action-strip {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 5px;
+        min-width: 0;
+        flex-wrap: initial;
+    }
+
+        .taskpane-layout-root .modern-action-strip .strip-btn {
+            width: 100%;
+            min-width: 0;
+            height: 30px;
+            padding: 0 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 10px;
+        }
+
+    /* -------------------------------------------------------------------------
+   TASK PANE WORKSPACE
+   ------------------------------------------------------------------------- */
+
+    .taskpane-layout-root .workspace-viewport {
+        width: 100%;
+        min-width: 0;
+        min-height: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /*
+ * In the task pane we deliberately use ONE column.
+ *
+ * This is the important difference from the desktop layout.
+ *
+ * The Outlook pane is narrow. Three columns would make every individual
+ * panel unreadably small.
+ */
+
+    .taskpane-layout-root .sage-dashboard-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+        min-width: 0;
+        gap: 8px;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+        /* -------------------------------------------------------------------------
+   TASK PANE PANELS
+   ------------------------------------------------------------------------- */
+
+        .taskpane-layout-root .sage-dashboard-row > * {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .taskpane-layout-root .sage-dashboard-row .flat-layout-cell {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            padding: 9px;
+            border-radius: 7px;
+            box-sizing: border-box;
+        }
+
+        /*
+ * Remove desktop minimum heights.
+ *
+ * A 245px minimum height on every widget is too expensive inside an
+ * Outlook pane and causes the dashboard to become unnecessarily long.
+ */
+
+        .taskpane-layout-root .sage-dashboard-row ::deep .dashboard-card,
+        .taskpane-layout-root .sage-dashboard-row ::deep .workspace-card,
+        .taskpane-layout-root .sage-dashboard-row ::deep .panel-card {
+            min-height: 0;
+            width: 100%;
+            max-width: 100%;
+        }
+
+    /* -------------------------------------------------------------------------
+   TASK PANE INPUTS
+   ------------------------------------------------------------------------- */
+
+    .taskpane-layout-root ::deep input,
+    .taskpane-layout-root ::deep textarea,
+    .taskpane-layout-root ::deep select {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    /* -------------------------------------------------------------------------
+   TASK PANE TEXT
+   ------------------------------------------------------------------------- */
+
+    .taskpane-layout-root ::deep .email-insight,
+    .taskpane-layout-root ::deep .email-insight-panel,
+    .taskpane-layout-root ::deep .crm-snapshot,
+    .taskpane-layout-root ::deep .crm-snapshot-panel,
+    .taskpane-layout-root ::deep .knowledge-base,
+    .taskpane-layout-root ::deep .knowledge-base-panel,
+    .taskpane-layout-root ::deep .documents-panel,
+    .taskpane-layout-root ::deep .my-tasks,
+    .taskpane-layout-root ::deep .tasks-panel,
+    .taskpane-layout-root ::deep .activity-timeline,
+    .taskpane-layout-root ::deep .activity-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /*
+ * Long customer names, email addresses and Sage X3 descriptions must not
+ * expand the task pane horizontally.
+ */
+
+    .taskpane-layout-root ::deep .customer-name,
+    .taskpane-layout-root ::deep .email-contact-name,
+    .taskpane-layout-root ::deep .email-company-name,
+    .taskpane-layout-root ::deep .crm-company-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* -------------------------------------------------------------------------
+   TASK PANE SCROLLING
+   ------------------------------------------------------------------------- */
+
+    /*
+ * MainLayout .content-body owns vertical scrolling.
+ *
+ * Do NOT add height:100% + overflow:auto to every dashboard layer.
+ * That creates nested scrollbars in Outlook.
+ */
+
+    .taskpane-layout-root,
+    .taskpane-layout-root .dashboard-wrapper,
+    .taskpane-layout-root .workspace-viewport {
+        overflow: visible;
+    }
+
+/* =========================================================================
+   VERY NARROW OUTLOOK PANE
+   ========================================================================= */
+
+@media (max-width: 360px) {
+
+    .taskpane-layout-root .metrics-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .taskpane-layout-root .modern-action-strip {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .taskpane-layout-root .flat-layout-cell,
+    .taskpane-layout-root .sage-dashboard-row .flat-layout-cell {
+        padding: 8px;
+    }
+}
+
+/* =========================================================================
+   SAFETY: PREVENT HORIZONTAL OVERFLOW
+   ========================================================================= */
+
+.dashboard-wrapper,
+.dashboard-header,
+.metrics-grid,
+.workspace-viewport,
+.sage-dashboard-row,
+.modern-action-strip {
+    min-width: 0;
+}
+
+    .dashboard-wrapper *,
+    .dashboard-header *,
+    .metrics-grid *,
+    .workspace-viewport *,
+    .sage-dashboard-row * {
+        box-sizing: border-box;
+    }

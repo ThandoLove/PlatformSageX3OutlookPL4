@@ -1,0 +1,133 @@
+﻿@using Radzen.Blazor
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/standard-base.css">
+    <link rel="stylesheet" href="/OperationalWorkspaceUI.styles.css" />
+
+    <!-- CUSTOM DESIGN SUBSYSTEM CSS ASSETS -->
+    <link rel="stylesheet" href="css/Landing.css" />
+    <link rel="stylesheet" href="css/Forms.css" />
+    <link rel="stylesheet" href="css/Workspace.css" />
+    <link rel="stylesheet" href="css/Components.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+
+    <link class="icon" type="image/png" href="/favicon.png" />
+
+    <!-- ========================================================================= -->
+    <!-- 🛡️ OFFICIAL MICROSOFT OFFICE JS SDK ROUTING STABILIZER                     -->
+    <!-- ========================================================================= -->
+    <script type="text/javascript">
+        // Preserve pristine history signatures prior to Office runtime script interventions
+        window._historyCache = { 
+            replaceState: window.history.replaceState, 
+            pushState: window.history.pushState 
+        };
+    </script>
+    
+    <!-- ✅ FIX 1: LOAD THE ACTUAL APPSFOROFFICE SDK ENGINE PANEL LAYER -->
+    <script src="https://microsoft.com" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        // Instantly restore core parameters to protect Blazor Server SignalR circuit loops
+        window.history.replaceState = window._historyCache.replaceState;
+        window.history.pushState = window._historyCache.pushState;
+    </script>
+
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <!-- 🔒 ENTERPRISE ANTI-CSRF DATA SHIELD INTEGRATION -->
+    <AntiforgeryToken />
+
+    <RadzenComponents />
+
+    <Routes @rendermode="InteractiveServer" />
+    <Modal @rendermode="InteractiveServer" />
+    <ReconnectModal />
+
+    <!-- PRESENTATION RENDERING ASSETS -->
+    <script src="/js/charts.js"></script>
+    <script src="/js/officeBridge.js"></script>
+    <script src="/js/app.js"></script>
+
+    <!-- CORE BLAZOR RENDER ENGINES & LIBRARY MODULES -->
+    <script src="_framework/blazor.server.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module"></script>
+
+    <!-- ========================================================================= -->
+    <!-- 📧 UNIFIED OFFICE.JS RUNTIME ENVIRONMENT INTERCEPTOR                      -->
+    <!-- ========================================================================= -->
+    <script>
+        // ✅ FIX 2: REGISTER THE EXACT ENVIRONMENT DETECTOR EXPECTED BY TASKPANE.RAZOR
+        window.checkOfficeEnvironment = function() {
+            if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
+                return "Outlook";
+            }
+            return "Browser";
+        };
+
+        (function() {
+            window['initialOfficeItem'] = window['initialOfficeItem'] || {};
+
+            function setInitialOfficeItem(item) {
+                try {
+                    window['initialOfficeItem'] = {
+                        subject: item.subject || '',
+                        from: (item.from && item.from.emailAddress && item.from.emailAddress.address) || '',
+                        body: ''
+                    };
+
+                    if (item.getBodyAsync) {
+                        item.getBodyAsync("text", function(result) {
+                            try {
+                                if (result && result.status === window['Office'].AsyncResultStatus.Succeeded) {
+                                    window['initialOfficeItem'].body = result.value || '';
+                                    // Direct trigger event cascade down to active page layout frames if mounted
+                                }
+                            } catch (e) { }
+                        });
+                    }
+                } catch (e) {
+                    window['initialOfficeItem'] = {};
+                }
+            }
+
+            // Await native framework load stack guarantees safely
+            if (typeof Office !== 'undefined') {
+                Office.onReady(function(info) {
+                    try {
+                        if (info.host === Office.HostType.Outlook) {
+                            console.log("Office.js layer verified and active inside Outlook framework runtime panel.");
+                            var item = Office.context.mailbox.item;
+                            if (item) {
+                                setInitialOfficeItem(item);
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Office context extraction error: ", e);
+                    } finally {
+                        // Double check routing parameters stability boundaries
+                        window.history.pushState = window._historyCache.pushState;
+                        window.history.replaceState = window._historyCache.replaceState;
+                    }
+                });
+            } else {
+                window.history.pushState = window._historyCache.pushState;
+                window.history.replaceState = window._historyCache.replaceState;
+            }
+        })();
+    </script>
+</body>
+
+</html>

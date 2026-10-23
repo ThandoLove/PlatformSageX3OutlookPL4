@@ -1,0 +1,133 @@
+﻿.kb-widget-card {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    min-height: 140px; /* compact */
+}
+
+.kb-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.75);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+}
+
+.kb-overlay-ring {
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.kb-overlay-text {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    color: #008272;
+    font-weight: 600;
+}
+
+.kb-search {
+    width: 100%;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.panel-header h3 {
+        margin: 0;
+        font-size: 0.98rem;
+        font-weight: 600;
+    }
+
+.kb-search-container {
+    margin-bottom: 8px;
+}
+
+.kb-links-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.kb-link-wrapper {
+    text-decoration: none;
+    color: inherit;
+}
+
+.kb-link-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+    .kb-link-item:hover {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+
+.kb-text-group {
+    flex-grow: 1;
+    margin-left: 8px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.kb-title {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kb-meta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.arrow-icon {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.kb-link-item:hover .arrow-icon {
+    opacity: 0.7;
+}
+
+.kb-empty {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.kb-footer {
+    margin-top: 8px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+    text-align: center;
+}
+
+::deep .footer-btn {
+    color: var(--sage-light-blue) !important;
+    font-weight: 600;
+}

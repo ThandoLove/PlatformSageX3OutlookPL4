@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path="build.yml" />
+  </Folder>
+  <Project Path="OperationalWorkspace.Addin/OperationalWorkspace.Addin.csproj" />
+  <Project Path="OperationalWorkspace.Domain/OperationalWorkspace.Domain.csproj" />
+  <Project Path="OperationalWorkspaceAPI/OperationalWorkspaceAPI.csproj" />
+  <Project Path="OperationalWorkspaceApplication/OperationalWorkspaceApplication.csproj" />
+  <Project Path="OperationalWorkspaceInfrastructure/OperationalWorkspaceInfrastructure.csproj" />
+  <Project Path="OperationalWorkspaceUI/OperationalWorkspaceUI.csproj" />
+  <Project Path="SharedProject/OperationalWorkspaceShared.csproj" />
+</Solution>

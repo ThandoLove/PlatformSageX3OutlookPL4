@@ -1,0 +1,113 @@
+﻿@page "/forms/send-knowledge"
+@rendermode InteractiveServer
+
+
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OperationalWorkspaceUI.Components.Pages.Forms.FormComponents
+@using OperationalWorkspaceUI.UIServices.Workspace
+@using OperationalWorkspaceUI.UIServices.System
+@using OperationalWorkspaceUI.Models.Forms
+
+@inject KnowledgeUIService KBService
+@inject Radzen.NotificationService Notifications
+@inject ModalService ModalService
+@inject NavigationManager NavManager
+
+@* Standardized Sage Wrapper *@
+<FormSection Title="Send Knowledge Article"
+             SubmitLabel="Send Article"
+             OnSubmit="HandleSubmit"
+             OnCancel="HandleCancel">
+
+    <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        @* SECTION 1: SEARCH ARTICLE *@
+        <div class="sage-form-group">
+            <FluentLabel Typo="Typography.Body" Style="font-weight: bold; color: #605e5c;">KNOWLEDGE BASE SEARCH</FluentLabel>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Find a Sage X3 article to transmit to the recipient.</p>
+            
+            <FluentTextField Label="Search Article Keywords"
+                             @bind-Value="Model.SearchQuery"
+                             Placeholder="e.g. Invoice Setup, Stock Management..."
+                             FullWidth="true"
+                             MaxLength="100" />
+            <ValidationMessage For="@(() => Model.SearchQuery)" />
+        </div>
+
+        @* SECTION 2: RECIPIENT MESSAGE *@
+        <div class="sage-form-group" style="margin-top: 24px;">
+            <FluentLabel Typo="Typography.Body" Style="font-weight: bold; color: #605e5c;">PERSONAL MESSAGE</FluentLabel>
+            <FluentTextArea Label="Note to Recipient"
+                            @bind-Value="Model.Message"
+                            Placeholder="Add context for this article..."
+                            Rows="6"
+                            FullWidth="true"
+                            MaxLength="1000" />
+            <ValidationMessage For="@(() => Model.Message)" />
+        </div>
+
+        @* SECTION 3: DELIVERY OPTIONS *@
+        <div class="sage-form-group" style="margin-top: 24px;">
+            <FluentCheckbox Label="Include link to documentation portal" @bind-Value="Model.IncludeLink" />
+            <FluentCheckbox Label="Notify me when article is opened" @bind-Value="Model.TrackOpen" />
+        </div>
+
+    </EditForm>
+</FormSection>
+
+@code {
+    // This is your UI Model (with validation attributes)
+    private OperationalWorkspaceUI.Models.Forms.SendKnowledgeModel Model = new();
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            // MAP: Convert UI Model into the DTO that the Service expects
+            var serviceModel = new OperationalWorkspaceUI.UIServices.Workspace.SendKnowledgeModel
+            {
+                SearchQuery = Model.SearchQuery,
+                Message = Model.Message
+                // Note: If your Service DTO has IncludeLink/TrackOpen, add them here
+            };
+
+            // Pass the service-specific model to the service
+            await KBService.SendKnowledgeAsync(serviceModel);
+            
+            Notifications.Notify(new Radzen.NotificationMessage
+            {
+                Severity = Radzen.NotificationSeverity.Success,
+                Summary = "Sage X3 Update",
+                Detail = "Knowledge article sent successfully.",
+                Duration = 4000
+            });
+            
+            await ModalService.CloseModal();
+            NavManager.NavigateTo("/workspace/knowledge");
+        }
+        catch (Exception ex)
+        {
+            Notifications.Notify(new Radzen.NotificationMessage
+            {
+                Severity = Radzen.NotificationSeverity.Error,
+                Summary = "Delivery Failed",
+                Detail = "Could not transmit article: " + ex.Message
+            });
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        await ModalService.CloseModal();
+        NavManager.NavigateTo("/workspace/knowledge");
+    }
+}
+
+<style>
+    .sage-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+</style>

@@ -1,0 +1,183 @@
+﻿@page "/attachments"
+
+
+@rendermode InteractiveServer
+
+@using OperationalWorkspaceUI.Components.Shared
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.Extensions.Configuration
+
+@inherits OperationalWorkspaceUI.Components.Pages.Workspace.WorkspaceComponents.AttachmentsBase
+
+<div class="attach-container">
+    @if (Configuration.GetValue<bool>("SageX3:UseMockData"))
+    {
+        <div class="mock-banner">Running in mock mode — Sage X3 integration is disabled.</div>
+    }
+    
+    <div class="page-title-header">
+        <h1 class="page-title">Documents</h1>
+        @if (SageConnected)
+        {
+            <span class="sage-status connected">Sage X3 Connected</span>
+        }
+        else
+        {
+            <span class="sage-status disconnected">Mock Repository Active</span>
+        }
+    </div>
+
+    <div class="top-bar">
+        <div class="header-left-actions">
+            <div class="search-box">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Color="Color.Neutral" />
+                <input type="text" placeholder="Search Documents..." @bind="SearchQuery" @bind:event="oninput" />
+            </div>
+
+            <div class="top-bar-filters-row">
+                <select @bind="SelectedType" class="ui-select">
+                    <option value="All">Type</option>
+                    <option value="application/pdf">PDF Documents</option>
+                    <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word Files</option>
+                    <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel Sheets</option>
+                </select>
+                <select class="ui-select"><option>Date</option></select>
+                <select class="ui-select"><option>Category</option></select>
+            </div>
+        </div>
+
+        <div class="upload-wrapper">
+            @* 🚀 FIXED: Hardcoded inline style directive permanently erases the browser's native text buttons from the DOM tree! *@
+            <InputFile id="fileInput" style="display: none !important;" OnChange="HandleFileUpload" disabled="@State.IsUploading" />
+            
+            <label for="fileInput" class="btn-upload-primary @(State.IsUploading ? "is-disabled" : "")">
+                @if (State.IsUploading)
+                {
+                    <FluentProgressRing Class="upload-ring" />
+                    <span class="upload-text">Uploading...</span>
+                }
+                else
+                {
+                    <FluentIcon Value="@(new Icons.Regular.Size16.ArrowUpload())" Color="Color.Fill" />
+                    <span>Upload</span>
+                }
+            </label>
+            <button class="ui-select refresh-btn" @onclick="RefreshAttachmentsFromServer">Refresh</button>
+        </div>
+    </div>
+    <div class="main-layout">
+        <div class="document-list-pane">
+            <div class="pane-header">
+                <span class="title">Document List</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="ui-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" /></th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Related To</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in PaginatedDocs)
+                        {
+                            <tr class="@(SelectedDoc?.Id == doc.Id ? "is-selected" : "")" @onclick="() => SelectedDoc = doc">
+                                <td><input type="checkbox" @onclick:stopPropagation /></td>
+                                <td>
+                                    <div class="file-name-cell">
+                                        <FluentIcon Value="@GetIcon(doc.FileName)" Color="Color.Error" />
+                                        <span>@doc.FileName</span>
+                                    </div>
+                                </td>
+                                <td>@doc.ContentType</td>
+                                <td>@FormatSize(doc.FileSize)</td>
+                                <td><span class="related-pill">@doc.RelatedEntity</span></td>
+                                <td class="text-right">
+                                    <div class="action-row">
+                                        <button type="button" class="btn-preview-ghost" @onclick:stopPropagation @onclick="() => SelectedDoc = doc">Preview</button>
+                                        <button type="button" class="btn-attach-teal" @onclick:stopPropagation @onclick="() => HandleAttachDocument(doc)">Attach</button>
+                                        <button type="button" class="btn-delete-ghost" @onclick:stopPropagation @onclick="() => DeleteDocument(doc)">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Color="Color.Error" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="list-footer">
+                <button class="btn-sage-browse" @onclick="BrowseSageX3">Browse Sage X3 →</button>
+                <div class="pagination">
+                    <button class="ui-select" disabled="@(CurrentPage == 1)" @onclick="() => CurrentPage--">Prev</button>
+                    <span class="pagination-info">@CurrentPage of @TotalPages</span>
+                    <button class="ui-select" disabled="@(CurrentPage == TotalPages || TotalPages == 0)" @onclick="() => CurrentPage++">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="document-preview-pane">
+            <div class="pane-header">
+                <span class="title">Document Preview</span>
+                @if (SelectedDoc != null)
+                {
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" @onclick="() => SelectedDoc = null" Class="dismiss-icon" />
+                }
+            </div>
+
+            @if (SelectedDoc != null)
+            {
+                <div class="preview-info">
+                    <div class="preview-hero">
+                        <FluentIcon Value="@GetIcon(SelectedDoc.FileName)" Class="preview-icon" Color="Color.Error" />
+                        <span class="hero-filename">@SelectedDoc.FileName</span>
+                    </div>
+                    <div class="preview-meta">Version 1.0 — @FormatSize(SelectedDoc.FileSize)</div>
+
+                    <div class="detail-grid">
+                        <div class="detail-row"><span class="lbl">Type</span><span class="val">@SelectedDoc.ContentType</span></div>
+                        <div class="detail-row"><span class="lbl">Source</span><span class="val">Local</span></div>
+                        <div class="detail-row"><span class="lbl">Date</span><span class="val">@SelectedDoc.UploadedAtUtc.ToShortDateString()</span></div>
+                    </div>
+
+                    @if (CanPreviewPdf)
+                    {
+                        <div class="pdf-preview-container">
+                            <iframe src="@(GetPdfUrl(SelectedDoc))" style="width: 100%; height: 100%; border: none; display: block;" scrolling="auto"></iframe>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="preview-empty-fallback">
+                            <p>Preview unavailable. Convert to PDF.</p>
+                            <button class="btn-upload-primary" type="button" @onclick="() => ConvertToPdf(SelectedDoc)">Convert To PDF</button>
+                        </div>
+                    }
+
+                    <div class="related-records">
+                        <RelatedRecordsPanel Title="Linked Order" Records="@(new List<string> { SelectedDoc.RelatedEntity })" OnRecordClicked="@((n) => OpenAttachmentViewer())" />
+                        <RelatedRecordsPanel Title="Linked Tasks" Records="@State.Tasks.Where(t => t.Title.Contains(SelectedDoc.FileName)).Select(t => t.Title).ToList()" OnRecordClicked="@((n) => Nav.NavigateTo("/activities"))" />
+                    </div>
+
+                    <div class="preview-bottom-actions">
+                        <button type="button" class="btn-fullscreen" @onclick="OpenAttachmentViewer">Open Full Screen</button>
+                        <button type="button" class="btn-attach-full" @onclick="() => HandleAttachDocument(SelectedDoc)">Attach To Email</button>
+                        <button type="button" class="btn-delete-full" @onclick="() => DeleteDocument(SelectedDoc)">Delete</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="preview-empty">
+                    <FluentIcon Value="@(new Icons.Regular.Size32.DocumentSearch())" />
+                    <p>Select a file and click "Preview" to inspect details.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

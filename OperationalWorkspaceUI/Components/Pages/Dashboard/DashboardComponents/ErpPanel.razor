@@ -1,0 +1,71 @@
+﻿@using OperationalWorkspaceApplication.DTOs
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+<FluentCard Class="erp-widget-card">
+    <div class="panel-header">
+        <h3>ERP Operations</h3>
+        <FluentIcon Value="@(new Icons.Regular.Size16.Database())" Color="@Color.Neutral" />
+    </div>
+
+    <div class="erp-content">
+        @if (Data is AdminErpDto admin)
+        {
+            <!-- ADMIN VIEW -->
+            <div class="erp-stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Orders Today</span>
+                    <span class="stat-value">@admin.TotalOrdersToday</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Invoices Generated</span>
+                    <span class="stat-value">@admin.InvoicesGenerated</span>
+                </div>
+                <div class="stat-item warning">
+                    <span class="stat-label">Overdue Invoices</span>
+                    <span class="stat-value">@admin.OverdueInvoices</span>
+                </div>
+                <div class="stat-item danger">
+                    <span class="stat-label">Stock Alerts</span>
+                    <span class="stat-value">@admin.StockAlerts</span>
+                </div>
+            </div>
+        }
+        else if (Data is EmployeeErpDto employee)
+        {
+            <!-- EMPLOYEE VIEW -->
+            <div class="erp-stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">My Open Orders</span>
+                    <span class="stat-value">@employee.MyOpenOrders</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Invoices Due</span>
+                    <span class="stat-value">@employee.InvoicesDue</span>
+                </div>
+                <div class="stat-item warning">
+                    <span class="stat-label">Pending Deliveries</span>
+                    <span class="stat-value">@employee.PendingDeliveries</span>
+                </div>
+                <div class="stat-item danger">
+                    <span class="stat-label">Stock Alerts</span>
+                    <span class="stat-value">@employee.StockAlerts</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="erp-empty">
+                <FluentProgressRing Style="width:24px; height:24px;" />
+                <p>Syncing Sage X3 Data...</p>
+            </div>
+        }
+    </div>
+</FluentCard>
+
+@code {
+    // 🔥 FIX: We use 'object' so it can accept either AdminErpDto or EmployeeErpDto
+    // without throwing a "matching property name" crash.
+    [Parameter]
+    public object? Data { get; set; }
+}

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ✅ FIXED: Reverted schemas back to standard v1.1 rules for Exchange compatibility -->
+<OfficeApp
+ xmlns="http://microsoft.com"
+ xmlns:xsi="http://w3.org"
+ xmlns:bt="http://microsoft.com"
+ xsi:type="MailApp">
+
+	<Id>61f77d34-7389-4e09-9686-dcbbcdccbd1d</Id>
+	<Version>1.0.0.0</Version>
+	<ProviderName>PlatformSageX3OutlookProvider</ProviderName>
+	<DefaultLocale>en-US</DefaultLocale>
+
+	<DisplayName DefaultValue="Operational Sage X3 Workspace"/>
+	<Description DefaultValue="Enterprise Outlook add-in bridging email context with Sage X3 and Creatio workflows."/>
+
+	<IconUrl DefaultValue="https://localhost:7173/icons/office-icon-32.svg"/>
+	<HighResolutionIconUrl DefaultValue="https://localhost:7173/icons/office-icon-80.svg"/>
+
+	<Hosts>
+		<Host Name="Mailbox"/>
+	</Hosts>
+
+	<Requirements>
+		<Sets>
+			<!-- ✅ FIXED: Changed MinVersion to 1.1 so legacy/on-prem Exchange servers accept it -->
+			<Set Name="Mailbox" MinVersion="1.1"/>
+		</Sets>
+	</Requirements>
+
+	<FormSettings>
+		<Form xsi:type="ItemRead">
+			<WebSettings>
+				<SourceLocation DefaultValue="https://localhost:7173/taskpane"/>
+			</WebSettings>
+		</Form>
+		<Form xsi:type="ItemEdit">
+			<WebSettings>
+				<SourceLocation DefaultValue="https://localhost:7173/taskpane"/>
+			</WebSettings>
+		</Form>
+	</FormSettings>
+
+	<Permissions>ReadItem</Permissions>
+
+	<Rule xsi:type="RuleCollection" Mode="Or">
+		<Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
+		<Rule xsi:type="ItemIs" ItemType="Message" FormType="Edit"/>
+	</Rule>
+
+	<DisableEntityHighlighting>false</DisableEntityHighlighting>
+</OfficeApp>

@@ -1,0 +1,106 @@
+﻿
+@using OperationalWorkspaceUI.State
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@implements IDisposable
+@inject WorkspaceState WState
+
+<FluentCard Class="timeline-card">
+    @* Panel Header *@
+    <div class="panel-header">
+        <h3>Activity Timeline</h3>
+        <FluentIcon Value="@(new Icons.Regular.Size16.ChevronUp())" Color="@Color.Neutral" />
+    </div>
+
+    <div class="timeline-scroll-area">
+        @if (WState.ActivityLogs != null && WState.ActivityLogs.Any())
+        {
+            @* Only show the 2 most recent activity items (latest first) to keep the card compact. *@
+            var recent = WState.ActivityLogs
+                         .OrderByDescending(a => a.Timestamp)
+                         .Take(2)
+                         .GroupBy(a => a.Timestamp.Date);
+
+            @foreach (var group in recent)
+            {
+                <div class="timeline-date-label">@GetDateHeader(group.Key)</div>
+
+                <div class="timeline-group-container">
+                    @foreach (var activity in group.OrderByDescending(a => a.Timestamp))
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-marker" data-color="@GetActivityColor(activity.Action)">
+                                <FluentIcon Value="@GetActivityIcon(activity.Action)" Color="@Color.Custom" CustomColor="white" />
+                            </div>
+
+                            <div class="timeline-content">
+                                <div class="activity-main">
+                                    <span class="activity-title">@activity.Title</span>
+                                    <span class="activity-time">@activity.Timestamp.ToString("HH:mm")</span>
+                                </div>
+                                <div class="activity-sub">
+                                    @activity.Action @(string.IsNullOrEmpty(activity.CreatedBy) ? "" : $"by {activity.CreatedBy}")
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="timeline-empty">
+                <p>No recent interactions found.</p>
+            </div>
+        }
+    </div>
+
+    <div class="timeline-footer">
+        <FluentAnchor Appearance="Appearance.Lightweight" Href="/activities" Class="footer-link">
+            View Full Timeline →
+        </FluentAnchor>
+    </div>
+</FluentCard>
+
+@code {
+    protected override void OnInitialized()
+    {
+        WState.OnChange += Refresh;
+    }
+
+    private void Refresh()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetDateHeader(DateTime date)
+    {
+        if (date.Date == DateTime.Today) return "TODAY";
+        if (date.Date == DateTime.Today.AddDays(-1)) return "YESTERDAY";
+        return date.ToString("MMM dd").ToUpper();
+    }
+
+    private Icon GetActivityIcon(string action) => action.ToLower() switch
+    {
+        var a when a.Contains("email") || a.Contains("knowledge") => new Icons.Regular.Size16.Mail(),
+        var a when a.Contains("upload") || a.Contains("file") => new Icons.Regular.Size16.ArrowUpload(),
+        var a when a.Contains("task") || a.Contains("complete") => new Icons.Regular.Size16.CheckmarkCircle(),
+        var a when a.Contains("ticket") => new Icons.Regular.Size16.TicketDiagonal(),
+        _ => new Icons.Regular.Size16.Info() @* This is a safe backup icon *@
+    };
+
+
+    private string GetActivityColor(string action) => action.ToLower() switch
+    {
+        var a when a.Contains("upload") || a.Contains("created") => "#10b981",
+        var a when a.Contains("delete") || a.Contains("remove") => "#ef4444",
+        var a when a.Contains("task") || a.Contains("complete") => "#3b82f6",
+        _ => "#64748b"
+    };
+
+    public void Dispose()
+    {
+        WState.OnChange -= StateHasChanged;
+    }
+}

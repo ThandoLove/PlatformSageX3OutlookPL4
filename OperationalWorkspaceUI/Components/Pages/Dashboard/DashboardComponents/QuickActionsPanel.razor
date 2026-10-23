@@ -1,0 +1,277 @@
+﻿@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OperationalWorkspaceUI.Components.Pages.Forms
+@using OperationalWorkspaceUI.UIServices.System
+@using OperationalWorkspaceUI.State
+
+@inject OperationalWorkspaceUI.UIServices.ToastUIService.ToastService CustomToastService
+@inject DashboardState DState
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject IJSRuntime JS
+@inject ModalService ModalService
+
+<div class="quick-actions-card">
+
+    <div class="quick-actions-grid">
+
+        @* 🏢 Add Partner *@
+        <button type="button"
+                class="action-item"
+                @onclick='async () => await OpenModalAction("Create Sage Client")'>
+
+            <div class="icon-circle circle-teal">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Building())"
+                            Color="Color.Fill" />
+            </div>
+
+            <span class="action-label">
+                Add Partner
+            </span>
+
+        </button>
+
+        @* 👤 Add Contact *@
+        <button type="button"
+                class="action-item"
+                @onclick='async () => await OpenModalAction("Add Business Contact")'>
+
+            <div class="icon-circle circle-blue">
+                <FluentIcon Value="@(new Icons.Regular.Size20.PersonAdd())"
+                            Color="Color.Fill" />
+            </div>
+
+            <span class="action-label">
+                Add Contact
+            </span>
+
+        </button>
+
+        @* 🎫 Create Ticket *@
+        <button type="button"
+                class="action-item"
+                @onclick='async () => await OpenModalAction("New Service Request")'>
+
+            <div class="icon-circle circle-blue-dark">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Cart())"
+                            Color="Color.Fill" />
+            </div>
+
+            <span class="action-label">
+                Create Ticket
+            </span>
+
+        </button>
+
+        @* 📝 Add Quote *@
+        <button type="button"
+                class="action-item"
+                @onclick='async () => await NavigateToSage("GESQTE", "BROWSE")'>
+
+            <div class="icon-circle circle-indigo">
+                <FluentIcon Value="@(new Icons.Regular.Size20.DocumentAdd())"
+                            Color="Color.Fill" />
+            </div>
+
+            <span class="action-label">
+                Add Quote
+            </span>
+
+        </button>
+
+        @* 🔗 Link Existing *@
+        <button type="button"
+                class="action-item"
+                @onclick='async () => await NavigateToSage("GESBPR", "LINK")'>
+
+            <div class="icon-circle circle-orange">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Link())"
+                            Color="Color.Fill" />
+            </div>
+
+            <span class="action-label">
+                Link Existing
+            </span>
+
+        </button>
+
+        @* 📊 Add Invoice *@
+        <button type="button"
+                class="action-item"
+                @onclick='async () => await NavigateToSage("GESPNH", "NEW")'>
+
+            <div class="icon-circle circle-green">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Document())"
+                            Color="Color.Fill" />
+            </div>
+
+            <span class="action-label">
+                Add Invoice
+            </span>
+
+        </button>
+
+        @* 📎 Attach Doc *@
+        <button type="button"
+                class="action-item"
+                @onclick='async () => await NavigateToSage("GESATT", "ATTACH")'>
+
+            <div class="icon-circle circle-blue">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Attach())"
+                            Color="Color.Fill" />
+            </div>
+
+            <span class="action-label">
+                Attach Doc
+            </span>
+
+        </button>
+
+    </div>
+
+</div>
+
+@code
+{
+    private async Task OpenModalAction(string title)
+    {
+        string? emailParam = DState.EmailContext?.SenderEmail;
+
+        string? nameParam = DState.EmailContext?.SenderName;
+
+        try
+        {
+            RenderFragment modalContent = title switch
+            {
+                "Create Sage Client" => builder =>
+                {
+                    builder.OpenComponent<CreateClientForm>(0);
+
+                    builder.AddAttribute(1,
+                        "Email",
+                        emailParam);
+
+                    builder.AddAttribute(2,
+                        "FullName",
+                        nameParam);
+
+                    builder.CloseComponent();
+                }
+                ,
+
+                "Add Business Contact" => builder =>
+                {
+                    builder.OpenComponent<NewContactForm>(0);
+
+                    builder.AddAttribute(1,
+                        "Email",
+                        emailParam);
+
+                    builder.AddAttribute(2,
+                        "FullName",
+                        nameParam);
+
+                    builder.CloseComponent();
+                }
+                ,
+
+                "New Service Request" => builder =>
+                {
+                    builder.OpenComponent<TicketDetailForm>(0);
+
+                    builder.CloseComponent();
+                }
+                ,
+
+                _ => throw new ArgumentException(
+                    $"Unknown action: {title}"
+                )
+            };
+
+            Console.WriteLine($"SENDING MODAL: {title}");
+
+            await ModalService.ShowModal(
+                title,
+                modalContent
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(
+                $"Modal generation fault: {ex.Message}"
+            );
+
+            CustomToastService.ShowError(
+                $"Modal generation fault: {ex.Message}"
+            );
+        }
+    }
+
+    private async Task NavigateToSage(
+        string functionCode,
+        string action)
+    {
+        bool useMock =
+            Configuration.GetValue<bool>(
+                "SageX3:UseMockData",
+                true
+            );
+
+        bool isEmailNull =
+            DState.EmailContext == null
+            ||
+            string.IsNullOrWhiteSpace(
+                DState.EmailContext.SenderEmail
+            );
+
+        if (!useMock && isEmailNull)
+        {
+            CustomToastService.ShowError(
+                "Please select an email thread first."
+            );
+
+            return;
+        }
+
+        if (useMock)
+        {
+            CustomToastService.ShowSuccess(
+                $"[Sage X3 Sandbox] Querying non-mutable ERP files via function: {functionCode} ({action})"
+            );
+
+            return;
+        }
+
+        try
+        {
+            bool isBridgeReady =
+                await JS.InvokeAsync<bool>(
+                    "officeBridge.isAvailable"
+                );
+
+            if (!isBridgeReady)
+            {
+                CustomToastService.ShowError(
+                    "Outlook Script Integration engine is initializing. Try again shortly."
+                );
+
+                return;
+            }
+
+            await JS.InvokeVoidAsync(
+                "officeBridge.openSageRecord",
+                functionCode,
+                action
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(
+                $"OfficeBridge communication breakdown: {ex.Message}"
+            );
+
+            CustomToastService.ShowError(
+                $"Bridge connection failure: {ex.Message}"
+            );
+        }
+    }
+}

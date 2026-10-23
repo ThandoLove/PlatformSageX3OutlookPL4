@@ -1,0 +1,28 @@
+﻿using OperationalWorkspaceApplication.Requests;
+using OperationalWorkspaceApplication.Responses;
+using OperationalWorkspaceApplication.Abstractions;
+using OperationalWorkspaceApplication.DTOs;
+
+
+namespace OperationalWorkspaceApplication.Interfaces.IServices
+{
+    public interface IAttachmentService
+    {
+        Task<Result<UploadAttachmentResponse>> UploadAsync(
+            UploadAttachmentRequest request,
+            CancellationToken cancellationToken);
+
+        Task<Result<bool>> DeleteAsync(
+            DeleteAttachmentRequest request,
+            CancellationToken cancellationToken);
+
+        Task<Result<AttachmentListResponse>> GetAsync(
+            GetAttachmentsRequest request,
+            CancellationToken cancellationToken);
+        Task<List<AttachmentDto>> GetRecentAttachmentsAsync(string userId);
+
+        Task<byte[]> GetAttachmentBinaryStreamAsync(Guid id, string userContext);
+        Task<string> GetAttachmentMimeTypeAsync(Guid id);
+        Task LogAttachmentAuditTrailAsync(Guid id, string action, string userContext);
+    }
+}

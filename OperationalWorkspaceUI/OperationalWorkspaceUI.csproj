@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+	<SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Accelist.FluentValidation.Blazor" Version="4.0.0" />
+   
+    <PackageReference Include="FluentValidation" Version="12.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
+    <PackageReference Include="Hangfire.Core" Version="1.8.25" />
+    <PackageReference Include="Majorsoft.Blazor.Extensions.BrowserStorage" Version="2.3.0" />
+
+
+	  <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.11.5" />
+
+
+	  <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.11.5" />
+
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Radzen.Blazor" Version="12.1.5" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+   
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OperationalWorkspaceApplication\OperationalWorkspaceApplication.csproj" />
+    <ProjectReference Include="..\OperationalWorkspaceInfrastructure\OperationalWorkspaceInfrastructure.csproj" />
+   
+    <ProjectReference Include="..\SharedProject\OperationalWorkspaceShared.csproj" />
+  </ItemGroup>
+
+</Project>

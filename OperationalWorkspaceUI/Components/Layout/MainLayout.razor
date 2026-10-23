@@ -1,0 +1,318 @@
+﻿@inherits LayoutComponentBase
+
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+
+@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceApplication.ApplicationState
+@using OperationalWorkspaceUI.UIServices.System
+@using OperationalWorkspaceUI.UIServices.Workspace
+@using OperationalWorkspaceUI.UIServices.ToastUIService
+@using OperationalWorkspaceUI.UIServices.EmailService
+
+@implements IDisposable
+
+@inject UIState UIState
+@inject DashboardState DashboardState
+@inject ActivityUIService ActivityService
+@inject AppStateContainer AppState
+@inject EventBus EventBus
+@inject AuthService AuthService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject IToastUIService ToastService
+@inject HttpClient Http
+@inject EmailContextUIService EmailUiService
+@inject AuthenticationStateProvider AuthProvider
+
+<FluentLayout Id="app-root-shell" Class="app-container">
+
+   @if (UIState.IsCheckingAuth)
+{
+    <div class="initial-app-boot-shroud">
+        <div class="spinner-border text-light mb-3" role="status"></div>
+        <span class="app-boot-label">Initializing Secure Workspace...</span>
+    </div>
+}
+else if (AppState.IsAuthenticated || IsTaskpanePath)
+{
+    <header class="global-header layout-guard-header">
+        <Topbar />
+    </header>
+
+    <div class="main-wrapper">
+
+        <div class="sidebar-wrapper @(DashboardState.IsSidebarCollapsed ? "is-collapsed-active" : "")">
+            <Sidebar />
+        </div>
+
+        <main class="page-content">
+            <div class="content-body">
+
+                @if (UIState.IsLoading || AppState.IsBusy)
+                {
+                    <LoadingSpinner />
+                }
+                else
+                {
+                    @Body
+                }
+
+            </div>
+        </main>
+
+        <ToastNotification />
+
+        <RightPanel />
+
+    </div>
+}
+else
+{
+    <div class="landing-frame secure-auth-landing-frame">
+        <LoginForm />
+    </div>
+}
+
+</FluentLayout>
+
+@code {
+
+    private DotNetObjectReference<MainLayout>? _objRef;
+
+    private bool _initialized;
+    private bool _disposed;
+    private bool _wasAuthenticated;
+
+    private Action? _unsubscribeEmail;
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += HandleLocationChanged;
+
+        _wasAuthenticated = AppState.IsAuthenticated;
+
+        AppState.OnChange += HandleUIStateChange;
+        AppState.OnChange += RefreshUI;
+        DashboardState.OnChange += RefreshUI;
+
+        // Skip the authentication splash inside Outlook taskpane.
+        if (IsTaskpanePath)
+        {
+            UIState.IsCheckingAuth = false;
+        }
+
+        _unsubscribeEmail = EventBus.Subscribe("EMAIL_RECEIVED", async data =>
+        {
+            if (_disposed) return;
+            if (data is not EmailInsightDto email) return;
+
+            try
+            {
+                UIState.IsLoading = true;
+                await InvokeAsync(StateHasChanged);
+
+                var syncResponse = await Http.PostAsJsonAsync("api/email/send", email);
+
+                if (syncResponse.IsSuccessStatusCode)
+                {
+                    var result = await EmailUiService.LoadEmailContextWithStatusAsync(email.MessageId);
+
+                    DashboardState.SetEmailContextState(result.Context, result.IsUnknownSender);
+
+                    if (result.IsUnknownSender)
+                    {
+                        ToastService.ShowInfo(
+                            "Sender email address not matched in Sage X3 records. Prompting registration.");
+                    }
+                    else
+                    {
+                        ToastService.ShowSuccess(
+                            $"Sage X3 Customer context loaded: {result.Context?.Email?.BusinessPartnerName}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Email synchronization endpoint declined payload ingestion.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"EMAIL_RECEIVED processing failed: {ex.Message}");
+            }
+            finally
+            {
+                if (!_disposed)
+                {
+                    UIState.IsLoading = false;
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _initialized || _disposed)
+            return;
+
+        _initialized = true;
+
+        try
+        {
+            await AuthService.InitializeAsync();
+
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+
+            UIState.SynchronizeUserSession(authState.User);
+
+            if (authState.User?.Identity?.IsAuthenticated == true)
+            {
+                var name =
+                    authState.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
+                    ?? "Operator";
+
+                var email =
+                    authState.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                    ?? string.Empty;
+
+                AppState.SetAuthentication(string.Empty, name, email);
+            }
+
+            // ALWAYS initialize the Outlook bridge.
+            // The bridge itself determines whether Office.js is available.
+            _objRef = DotNetObjectReference.Create(this);
+
+            await JS.InvokeVoidAsync(
+                "officeBridge.initialize",
+                _objRef);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"MainLayout initialization error: {ex.Message}");
+        }
+        finally
+        {
+            if (!IsTaskpanePath)
+            {
+                UIState.IsCheckingAuth = false;
+            }
+
+            if (!_disposed)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    [JSInvokable]
+    public Task OnEmailReceived(EmailInsightDto emailData)
+    {
+        if (_disposed)
+            return Task.CompletedTask;
+
+        if (emailData == null)
+            return Task.CompletedTask;
+
+        try
+        {
+            EventBus.Publish("EMAIL_RECEIVED", emailData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("OnEmailReceived failed: " + ex.Message);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        RefreshUI();
+    }
+
+    private void HandleUIStateChange()
+    {
+        if (_disposed)
+            return;
+
+        var previously = _wasAuthenticated;
+        var now = AppState.IsAuthenticated;
+
+        _wasAuthenticated = now;
+
+        if (previously && !now)
+        {
+            _ = InvokeAsync(() =>
+            {
+                try
+                {
+                    var activeSubPath =
+                        Nav.ToBaseRelativePath(Nav.Uri).ToLowerInvariant();
+
+                    if (!activeSubPath.StartsWith("taskpane"))
+                    {
+                        Nav.NavigateTo("/", replace: true);
+                    }
+                }
+                catch
+                {
+                }
+
+                StateHasChanged();
+            });
+
+            return;
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private bool IsTaskpanePath
+    {
+        get
+        {
+            var relativeUrl = Nav.ToBaseRelativePath(Nav.Uri).ToLowerInvariant();
+
+            return relativeUrl.StartsWith("taskpane");
+        }
+    }
+
+    private void RefreshUI()
+    {
+        if (_disposed)
+            return;
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        Nav.LocationChanged -= HandleLocationChanged;
+
+        AppState.OnChange -= HandleUIStateChange;
+        AppState.OnChange -= RefreshUI;
+        DashboardState.OnChange -= RefreshUI;
+
+        _unsubscribeEmail?.Invoke();
+        _unsubscribeEmail = null;
+
+        _objRef?.Dispose();
+        _objRef = null;
+    }
+
+}

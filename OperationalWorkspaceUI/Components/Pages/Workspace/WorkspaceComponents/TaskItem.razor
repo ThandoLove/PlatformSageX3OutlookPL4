@@ -1,0 +1,162 @@
+﻿@using OperationalWorkspace.Domain.Enums
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceApplication.Mappers
+@using OperationalWorkspaceUI.State
+@using TaskStatus = OperationalWorkspace.Domain.Enums.TaskStatus
+@inject IJSRuntime JSRuntime
+@inject WorkspaceState State
+@inject DashboardState AdminState
+
+<div class="task-card @GetCssClass(Task)" @onclick="HandleTaskClick">
+
+    <!-- COL 1: IDENTITY -->
+    <div class="card-col info-group">
+        <div class="card-t">@Task.Title</div>
+        <div class="card-c">@Task.CompanyName</div>
+    </div>
+
+    <!-- COL 2: STATUS -->
+    <div class="card-col status-group">
+        <span class="p-chip @Task.Priority.ToString().ToLower()">
+            <i class="oi oi-layers"></i> @Task.Priority
+        </span>
+        <div class="due-text @(TaskRulesEngine.IsOverdue(Task) ? "red-alert" : "")">
+            <i class="oi oi-clock"></i> @TaskRulesEngine.DueLabel(Task)
+        </div>
+    </div>
+
+    <!-- COL 3: SOURCE -->
+    <div class="card-col source-group">
+        <button class="btn-ghost-link" @onclick="OpenEmail" @onclick:stopPropagation="true">
+            <i class="oi oi-circle-check"></i>
+            <span>Open Source Email</span>
+            <span class="sage-s-box">S</span>
+        </button>
+    </div>
+
+    <!-- COL 4: MAIN ACTION -->
+    <div class="card-col action-group">
+        @if (!Task.Completed && Task.Status != TaskStatus.Completed)
+        {
+            <button class="btn-outline-complete" @onclick="HandleComplete" @onclick:stopPropagation="true">
+                <i class="oi oi-envelope-closed"></i>
+                <span>Complete</span>
+            </button>
+        }
+        else
+        {
+            <span class="completed-label"><i class="oi oi-check"></i> Done</span>
+        }
+    </div>
+
+    <!-- COL 5: SAGE ACTION (FIXED: Empty tag contents. Purely driven by the CSS ::after generator to eliminate any text overlap) -->
+    <div class="card-col sage-link-group">
+        <button class="btn-blue-square-icon"
+                title="View in Sage X3"
+                @onclick="HandleViewInSageX3"
+                @onclick:stopPropagation="true">View in Sage X3</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public TaskDto Task { get; set; } = default!;
+    [Parameter] public EventCallback<TaskDto> OnSelect { get; set; }
+
+    private string GetCssClass(TaskDto t) => TaskRulesEngine.GetDueState(t) switch
+    {
+        TaskDueState.Overdue => "border-red-alert",
+        TaskDueState.DueToday => "bg-light-blue",
+        TaskDueState.Completed => "is-completed-faded",
+        _ => ""
+    };
+
+    private async Task HandleTaskClick()
+    {
+        if (AdminState.IsAdminEnvironment)
+        {
+            AdminState.SetSelectedTask(Task);
+        }
+        else
+        {
+            await OnSelect.InvokeAsync(Task);
+        }
+    }
+
+    private async Task OpenEmail()
+    {
+        if (!string.IsNullOrEmpty(Task.OutlookItemId))
+        {
+            await JSRuntime.InvokeVoidAsync("openOutlookItem", Task.OutlookItemId);
+        }
+    }
+
+    private async Task HandleViewInSageX3()
+    {
+        // 1. Instantly update the side panel context with the selected task metrics
+        if (AdminState.IsAdminEnvironment)
+        {
+            AdminState.SetSelectedTask(Task);
+        }
+        else
+        {
+            await OnSelect.InvokeAsync(Task);
+        }
+
+        // 2. ACTIVE INTEGRATION DEEP LINK ROUTING PASS
+        if (!string.IsNullOrEmpty(Task.Title))
+        {
+            // Extract identifiers cleanly from the title text strings (e.g., "INV-100123" or "SO-10293")
+            string entityFunction = "BPC"; // Default fallback: Business Partner Screen
+            string entityRecordKey = Uri.EscapeDataString(Task.CompanyName ?? "");
+
+            if (Task.Title.Contains("Invoice", StringComparison.OrdinalIgnoreCase) || Task.Title.Contains("INV-", StringComparison.OrdinalIgnoreCase))
+            {
+                entityFunction = "SIH"; // Sage X3 Customer Invoicing Screen Function Code
+                entityRecordKey = ExtractRecordKey(Task.Title, "INV-");
+            }
+            else if (Task.Title.Contains("Order", StringComparison.OrdinalIgnoreCase) || Task.Title.Contains("SO-", StringComparison.OrdinalIgnoreCase))
+            {
+                entityFunction = "SOH"; // Sage X3 Sales Order Entry Screen Function Code
+                entityRecordKey = ExtractRecordKey(Task.Title, "SO-");
+            }
+            else if (Task.Title.Contains("Quote", StringComparison.OrdinalIgnoreCase) || Task.Title.Contains("QTE-", StringComparison.OrdinalIgnoreCase))
+            {
+                entityFunction = "SQH"; // Sage X3 Sales Quotation Screen Function Code
+                entityRecordKey = ExtractRecordKey(Task.Title, "QTE-");
+            }
+
+            // Generate deep hyperlink routing syntax to pull up the record details inside the Sage Web client frame
+            var sageDeepLinkUrl = $"https://your-sage-x3-server.com{entityFunction}&key={entityRecordKey}";
+
+            // Execute the JavaScript interop launcher thread to bypass Outlook sandbox and slide open Sage X3
+            await JSRuntime.InvokeVoidAsync("window.open", sageDeepLinkUrl, "_blank");
+        }
+    }
+
+    private string ExtractRecordKey(string sourceText, string prefixToken)
+    {
+        try
+        {
+            int index = sourceText.IndexOf(prefixToken, StringComparison.OrdinalIgnoreCase);
+            if (index != -1)
+            {
+                var trailingString = sourceText.Substring(index);
+                var spaceIndex = trailingString.IndexOf(' ');
+                var dynamicCleanKey = spaceIndex != -1 ? trailingString.Substring(0, spaceIndex) : trailingString;
+                return Uri.EscapeDataString(dynamicCleanKey.Trim());
+            }
+        }
+        catch { /* Fallback to standard parameter if extraction drops */ }
+        return Uri.EscapeDataString(Task.CompanyName ?? "");
+    }
+
+    private void HandleComplete()
+    {
+        Task.Completed = true;
+        Task.Status = TaskStatus.Completed;
+        Task.UpdatedDate = DateTime.UtcNow;
+
+        State.LogActivity(Task.Title, "Completed Task", "Current User");
+        State.Notify();
+    }
+}

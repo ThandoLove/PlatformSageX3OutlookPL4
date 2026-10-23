@@ -1,0 +1,20 @@
+﻿<span class="badge @GetClass()"
+      style="font-size: 0.65rem !important; padding: 4px 8px !important; border-radius: 4px !important; font-weight: 900 !important; text-transform: uppercase !important; display: inline-block !important;">
+    @DisplayText
+</span>
+
+@code {
+    [Parameter] public string? Status { get; set; }
+    [Parameter] public string? DisplayText { get; set; }
+
+    protected override void OnParametersSet() => DisplayText ??= Status ?? "Normal";
+
+    private string GetClass() => Status?.ToLower() switch
+    {
+        "rejected" or "overdue" or "urgent" => "bg-danger text-white",
+        "pending" or "medium" or "warning" => "bg-warning text-dark",
+        "approved" or "success" => "bg-success text-white",
+        "sent" or "info" => "bg-info text-white",
+        _ => "bg-light text-dark border"
+    };
+}

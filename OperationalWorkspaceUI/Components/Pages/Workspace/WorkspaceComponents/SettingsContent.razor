@@ -1,0 +1,296 @@
+﻿@using OperationalWorkspaceUI.UIServices.ToastUIService
+@using OperationalWorkspaceUI.UIServices.Workspace
+@using OperationalWorkspaceUI.State
+
+@inject UIState UIState
+@implements IDisposable
+
+@inject SettingsUIService SettingsService
+@inject IToastUIService ToastService
+
+<div class="settings-root">
+
+    <!-- SETTINGS HEADER PANEL ROW -->
+    <div class="settings-header">
+        <div>
+            <h1>Settings</h1>
+            <p>Manage workspace preferences, integrations, security, and notifications.</p>
+        </div>
+    </div>
+
+    <!-- HIGH-DENSITY PREFERENCES DISPLAY MATRIX GRID -->
+    <div class="settings-grid">
+
+        <!-- A. USER PROFILE ACCOUNT SETTINGS PREVIEW -->
+        <section class="settings-card">
+            <div class="card-header">
+                <h3>Profile Settings</h3>
+            </div>
+
+            <div class="profile-section">
+                <img src="https://pravatar.cc" class="profile-avatar" alt="User Avatar" />
+                <div>
+                    <h4>@_profileModel.Name</h4>
+                    <span>@_profileModel.Role</span>
+                </div>
+            </div>
+
+            <EditForm Model="@_profileModel" OnValidSubmit="ExecuteProfileSavePipeline">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <InputText @bind-Value="_profileModel.Name" class="compact-form-input" />
+                    <ValidationMessage For="@(() => _profileModel.Name)" class="settings-field-error" />
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <InputText @bind-Value="_profileModel.Email" class="compact-form-input" />
+                    <ValidationMessage For="@(() => _profileModel.Email)" class="settings-field-error" />
+                </div>
+
+                <div class="form-group">
+                    <label>Department Scope Directive</label>
+                    <InputText @bind-Value="_profileModel.Department" class="compact-form-input" />
+                </div>
+
+                <button type="submit" class="primary-btn" disabled="@_isSavingProfile">
+                    @(_isSavingProfile ? "Saving Context..." : "Save Changes")
+                </button>
+            </EditForm>
+        </section>
+
+        <!-- B. OPERATIONAL NOTIFICATIONS METRIC TOGGLES -->
+        <section class="settings-card">
+            <div class="card-header">
+                <h3>Notifications Preference Matrix</h3>
+            </div>
+
+            <div class="toggle-row">
+                <div>
+                    <strong>Email Notifications</strong>
+                    <span>Receive system activity telemetry alerts by email</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" @bind="_emailNotifications" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div>
+                    <strong>Workflow Alerts</strong>
+                    <span>Approval request flags and escalation matrices</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" @bind="_workflowAlerts" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div>
+                    <strong>CRM Notifications</strong>
+                    <span>Customer activity updates and data pipeline triggers</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" @bind="_crmNotifications" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- FIXED: Inline margin-top removed and converted to a clean utility class -->
+            <div class="card-footer-action-row toggle-footer-wrapper">
+                <button type="button" class="primary-btn" @onclick="ExecuteGlobalPreferencesCommit">Save Toggles</button>
+            </div>
+        </section>
+
+        <!-- C. ENCRYPTED SECURITY CREDENTIALS CONTROLS -->
+        <section class="settings-card">
+            <div class="card-header">
+                <h3>Security Settings</h3>
+            </div>
+
+            <EditForm Model="@_securityModel" OnValidSubmit="ExecuteSecurityMutationPipeline">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label>Current Validation Password</label>
+                    <InputText @bind-Value="_securityModel.CurrentPassword" type="password" class="compact-form-input" />
+                    <ValidationMessage For="@(() => _securityModel.CurrentPassword)" class="settings-field-error" />
+                </div>
+
+                <div class="form-group">
+                    <label>New Secured Password Node</label>
+                    <InputText @bind-Value="_securityModel.NewPassword" type="password" class="compact-form-input" />
+                    <ValidationMessage For="@(() => _securityModel.NewPassword)" class="settings-field-error" />
+                </div>
+
+                <div class="form-group">
+                    <label>Confirm Password Mapping</label>
+                    <InputText @bind-Value="_securityModel.ConfirmPassword" type="password" class="compact-form-input" />
+                    <ValidationMessage For="@(() => _securityModel.ConfirmPassword)" class="settings-field-error" />
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <strong>Two-Factor Authentication</strong>
+                        <span>Enable additional secure layer protection</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" @bind="_tfaEnabled" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="primary-btn" disabled="@_isSavingSecurity">
+                    @(_isSavingSecurity ? "Encrypting Node..." : "Update Security")
+                </button>
+            </EditForm>
+        </section>
+
+        <!-- D. INTEGRATIONS ENVIRONMENT ENDPOINTS HUB -->
+        <section class="settings-card">
+            <div class="card-header">
+                <h3>System Integration Routing Links</h3>
+            </div>
+
+            <div class="integration-row">
+                <div>
+                    <strong>Sage X3 ERP Cluster</strong>
+                    <span>Connected Server Environment Endpoint</span>
+                </div>
+                <span class="status-pill active">Active</span>
+            </div>
+
+            <div class="integration-row">
+                <div>
+                    <strong>Microsoft Outlook</strong>
+                    <span>Add-In Manifest Deployment Context</span>
+                </div>
+                <span class="status-pill active">Active</span>
+            </div>
+
+            <div class="integration-row">
+                <div>
+                    <strong>Creatio CRM</strong>
+                    <span>Optional Data Mapping Stream Integration</span>
+                </div>
+                <button type="button" class="secondary-btn" @onclick='() => TriggerFeatureConfigurePrompt("Creatio CRM")'>Configure</button>
+            </div>
+
+            <div class="integration-row">
+                <div>
+                    <strong>Microsoft Teams</strong>
+                    <span>Optional Workspace Communication Alerts Channel</span>
+                </div>
+                <button type="button" class="secondary-btn" @onclick='() => TriggerFeatureConfigurePrompt("Microsoft Teams")'>Connect</button>
+            </div>
+        </section>
+
+    </div>
+</div>
+@code {
+    private bool _isSavingProfile = false;
+    private bool _isSavingSecurity = false;
+
+    private bool _emailNotifications = true;
+    private bool _workflowAlerts = true;
+    private bool _crmNotifications = false;
+    private bool _tfaEnabled = true;
+
+    private ProfileWrapperModel _profileModel = new();
+    private SecurityWrapperModel _securityModel = new();
+
+    protected override void OnInitialized()
+    {
+        UIState.OnChange += RefreshUser;
+        RefreshUser();
+    }
+
+    private void RefreshUser()
+    {
+        _profileModel = new ProfileWrapperModel
+        {
+            Name = string.IsNullOrWhiteSpace(UIState.UserName) ? "Not Logged In" : UIState.UserName,
+            Email = string.IsNullOrWhiteSpace(UIState.UserEmail) ? "No Email Provided" : UIState.UserEmail,
+            Role = string.IsNullOrWhiteSpace(UIState.UserName) ? "Guest Operator" : "Sage X3 Operator",
+            Department = string.IsNullOrWhiteSpace(UIState.UserName) ? "None" : "Operations"
+        };
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        UIState.OnChange -= RefreshUser;
+    }
+
+    private async Task ExecuteProfileSavePipeline()
+    {
+        _isSavingProfile = true;
+        StateHasChanged();
+
+        await Task.Delay(800);
+
+        _isSavingProfile = false;
+        StateHasChanged();
+
+        ToastService.ShowSuccess($"Profile updated successfully for {_profileModel.Name}.");
+    }
+
+    private async Task ExecuteGlobalPreferencesCommit()
+    {
+        await SettingsService.SaveSettingsAsync();
+        ToastService.ShowSuccess("Notification preferences saved successfully.");
+    }
+
+    private async Task ExecuteSecurityMutationPipeline()
+    {
+        if (_securityModel.NewPassword != _securityModel.ConfirmPassword)
+        {
+            ToastService.ShowError("Passwords do not match.");
+            return;
+        }
+
+        _isSavingSecurity = true;
+        StateHasChanged();
+
+        await Task.Delay(1000);
+
+        _isSavingSecurity = false;
+        _securityModel = new SecurityWrapperModel();
+        ToastService.ShowSuccess("Security settings updated successfully.");
+        StateHasChanged();
+    }
+
+    private void TriggerFeatureConfigurePrompt(string platform)
+    {
+        ToastService.ShowInfo($"{platform} configuration launched.");
+    }
+
+    public class ProfileWrapperModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Profile name parameter is mandatory.")]
+        public string Name { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email tracking route is mandatory.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Invalid formatting.")]
+        public string Email { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+    }
+
+    public class SecurityWrapperModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Current password token validation required.")]
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "New security criteria deployment token required.")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Confirmation validation lookup parameter required.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,149 @@
+﻿@using OperationalWorkspaceApplication.ApplicationState
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceUI.State
+
+@implements IDisposable
+@inject WorkspaceState State
+@inject AppStateContainer AppState
+@inject UIState UIState
+@inject DashboardState AdminState
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<div class="hub-container" style="position: relative;">
+
+    @if (State.IsLoadingTasks)
+    {
+        <div class="sync-overlay">
+            <FluentProgressRing Style="width: 32px; height: 32px;" />
+            <span class="sync-text">Syncing Tasks...</span>
+        </div>
+    }
+
+    <header class="hub-header">
+        <div class="hub-title-group @(ActiveTab == "All" ? "active" : "")" @onclick='() => SelectFilter("All")'>
+            <i class="oi oi-list-rich"></i><span>Tasks Grid</span>
+        </div>
+
+        <nav class="hub-tabs">
+            <div class="tab-item @(ActiveTab == "Today" ? "active" : "")" @onclick='() => SelectFilter("Today")'>
+                Today (@SourceTasks.Count(t => t.DueDate?.Date == DateTime.Today && !t.Completed))
+            </div>
+            <div class="tab-item @(ActiveTab == "Overdue" ? "active" : "")" @onclick='() => SelectFilter("Overdue")'>
+                Overdue (@SourceTasks.Count(t => t.DueDate?.Date < DateTime.Today && !t.Completed))
+            </div>
+            <div class="tab-item @(ActiveTab == "Upcoming" ? "active" : "")" @onclick='() => SelectFilter("Upcoming")'>
+                Upcoming (@SourceTasks.Count(t => t.DueDate?.Date > DateTime.Today && !t.Completed))
+            </div>
+            <div class="tab-item @(ActiveTab == "Completed" ? "active" : "")" @onclick='() => SelectFilter("Completed")'>
+                Completed (@SourceTasks.Count(t => t.Completed))
+            </div>
+        </nav>
+    </header>
+
+    <div class="sub-header-bar">
+        <div class="sub-header-left">
+            <div class="pill-dropdown">
+                <i class="oi oi-calendar"></i>
+                <span>@ActiveTab (@GetFilteredTasks().Count())</span>
+                <i class="oi oi-chevron-bottom"></i>
+            </div>
+
+            <button class="btn-filter-action" @onclick="ToggleFilter">
+                <i class="oi oi-list"></i> Filter
+            </button>
+        </div>
+        <button class="btn-source-top-bold" @onclick="OpenTopEmail">Open Source Email</button>
+    </div>
+
+    @if (IsFilterOpen)
+    {
+        <div class="filter-tray-mini animate-fade-in">
+            <label>Priority:</label>
+            <select @bind="PriorityFilter">
+                <option value="All">All Levels</option>
+                <option value="Urgent">Urgent</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+        </div>
+    }
+
+    <div class="task-list-scroller">
+        @foreach (var task in GetFilteredTasks())
+        {
+            <TaskItem Task="task" OnSelect="OnTaskSelected" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public IEnumerable<TaskDto>? Tasks { get; set; }
+    [Parameter] public string SearchQuery { get; set; } = "";
+    [Parameter] public EventCallback<TaskDto> OnTaskSelected { get; set; }
+
+    private string ActiveTab = "Today";
+    private bool IsFilterOpen = false;
+    private string PriorityFilter = "All";
+
+    // ACTIVE DYNAMIC DATA RESOLVER: Pulls target identity variables straight from live session login tokens context
+    private string ResolvedUserEmail => !string.IsNullOrWhiteSpace(UIState.UserEmail)
+        ? UIState.UserEmail
+        : (!string.IsNullOrWhiteSpace(AppState.CurrentEmail?.SenderEmail) ? AppState.CurrentEmail.SenderEmail : "alex.turner@company.com");
+
+    // UNIFIED PIPELINE ENGINE: Captures task items assigned to the active user context or records initialized as unassigned
+    private IEnumerable<TaskDto> SourceTasks => Tasks ?? State.Tasks
+        .Where(t => t.AssignedTo == ResolvedUserEmail || string.IsNullOrEmpty(t.AssignedTo) || t.AssignedTo == "Unlinked");
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += Refresh;
+        AdminState.OnChange += Refresh;
+        UIState.OnChange += Refresh;
+        AppState.OnChange += Refresh;
+    }
+
+    private void Refresh()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleFilter() => IsFilterOpen = !IsFilterOpen;
+
+    private async Task OpenTopEmail()
+    {
+        var firstTask = GetFilteredTasks().FirstOrDefault();
+        if (firstTask != null && !string.IsNullOrEmpty(firstTask.OutlookItemId))
+            await JSRuntime.InvokeVoidAsync("openOutlookItem", firstTask.OutlookItemId);
+    }
+
+    private IEnumerable<TaskDto> GetFilteredTasks()
+    {
+        var q = SourceTasks;
+
+        q = ActiveTab switch
+        {
+            "Overdue" => q.Where(t => t.DueDate?.Date < DateTime.Today && !t.Completed),
+            "Upcoming" => q.Where(t => t.DueDate?.Date > DateTime.Today && !t.Completed),
+            "Completed" => q.Where(t => t.Completed),
+            "All" => q,
+            _ => q.Where(t => t.DueDate?.Date == DateTime.Today && !t.Completed)
+        };
+
+        if (PriorityFilter != "All") q = q.Where(x => x.Priority.ToString() == PriorityFilter);
+        if (!string.IsNullOrWhiteSpace(SearchQuery)) q = q.Where(t => t.Title.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase));
+
+        return q;
+    }
+
+    private void SelectFilter(string tabName) => ActiveTab = tabName;
+
+    public void Dispose()
+    {
+        State.OnChange -= Refresh;
+        AdminState.OnChange -= Refresh;
+        UIState.OnChange -= Refresh;
+        AppState.OnChange -= Refresh;
+    }
+}

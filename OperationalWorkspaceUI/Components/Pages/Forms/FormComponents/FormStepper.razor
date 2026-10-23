@@ -1,0 +1,81 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Authorization
+@* THE FIX FOR THE ICONS ERROR *@
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@attribute [Authorize]
+
+<div class="sage-stepper-container">
+    @* SAGE USER IDENTITY BAR *@
+    <div class="sage-user-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <FluentPersona Name="John Smith"
+                           Status="PresenceStatus.Available"
+                           Details="Sales Rep"
+                           ImageSize="32px" />
+        </div>
+        <div class="connection-status">
+            Connected to Sage X3 <FluentIcon Value="@(new Icons.Regular.Size12.ChevronDown())" />
+        </div>
+    </div>
+
+    @* TABS *@
+    <div class="sage-tab-header">
+        <FluentTabs @bind-ActiveTabId="@ActiveFormId" OnTabChange="HandleTabChange">
+            <FluentTab Id="contact" Label="Contact" Icon="@(new Icons.Regular.Size20.ContactCard())" />
+            <FluentTab Id="order" Label="Order" Icon="@(new Icons.Regular.Size20.Cart())" />
+            <FluentTab Id="task" Label="Task" Icon="@(new Icons.Regular.Size20.ClipboardTask())" />
+            <FluentTab Id="quote" Label="Quote" Icon="@(new Icons.Regular.Size20.DocumentTarget())" />
+            <FluentTab Id="kb" Label="Knowledge" Icon="@(new Icons.Regular.Size20.Book())" />
+        </FluentTabs>
+    </div>
+
+    <div class="sage-form-viewport">
+        <div class="form-scroll-container">
+            @switch (ActiveFormId)
+            {
+                case "contact":
+                    <NewContactForm />
+                    break;
+                
+                case "task":
+
+                    <CreateTaskForm />
+                    break;
+              
+                case "kb":
+
+                    <SendKnowledgeForm />
+                    break;
+              
+                default:
+                    <div class="dashboard-placeholder">
+                        @* FIXED: Swapped BoxMultiple for Cube (which is fully supported in Size48) *@
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Cube())" Color="Color.Disabled" />
+                        <p>Select a Quick Action to begin.</p>
+                    </div>
+                    break;
+
+
+
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ActiveFormId { get; set; } = "contact";
+
+    public void SetActiveForm(string formId)
+    {
+        ActiveFormId = formId;
+        StateHasChanged();
+    }
+
+    private void HandleTabChange(FluentTab tab)
+    {
+        ActiveFormId = tab.Id ?? "contact";
+    }
+
+    private void ResetToDashboard() => ActiveFormId = "none";
+}

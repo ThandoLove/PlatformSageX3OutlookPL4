@@ -1,0 +1,120 @@
+﻿/* ========================================================================= 
+   CRMPANEL ISOLATED COMPACT DESIGN SPECIFICATION (CLEAN SPECIFICITY)
+   ========================================================================= */
+
+/* The main layout wrapper constraints shrink the cards height */
+.crm-snapshot-card {
+    width: 100%;
+    border-radius: 12px;
+    padding: 10px 12px;
+    min-height: 140px; /* Squeezes oversized 350px panel walls down to high-density */
+    max-height: 200px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+    /* Panel Header positioning alignment */
+    .crm-snapshot-card .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        padding: 0;
+    }
+
+        .crm-snapshot-card .panel-header h3 {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #475569;
+        }
+
+    /* Company Dropdown Selector */
+    .crm-snapshot-card .company-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(248, 250, 252, 0.6);
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 8px;
+        height: 28px;
+        box-sizing: border-box;
+    }
+
+    .crm-snapshot-card .company-name {
+        flex-grow: 1;
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 12px;
+    }
+
+    /* High Density Metrics Grid Layout */
+    .crm-snapshot-card .crm-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+        .crm-snapshot-card .crm-grid.bottom-row {
+            margin-bottom: 0;
+        }
+
+    .crm-snapshot-card .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .crm-snapshot-card .stat-label {
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+    }
+
+    .crm-snapshot-card .stat-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.1;
+    }
+
+        .crm-snapshot-card .stat-value.small {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+    /* Credit Limit Progress Bar variables */
+    .crm-snapshot-card .limit-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .crm-snapshot-card ::deep .limit-progress {
+        height: 4px;
+        border-radius: 10px;
+    }
+
+    /* State color mappings */
+    .crm-snapshot-card .snapshot-red {
+        color: #ef4444;
+    }
+
+    .crm-snapshot-card .snapshot-green {
+        color: #10b981;
+    }
+
+/* Dark mode handling using deep isolation rules checks */
+::deep .dark-mode .crm-snapshot-card .company-selector {
+    background: #1e293b;
+    border-color: #334155;
+}

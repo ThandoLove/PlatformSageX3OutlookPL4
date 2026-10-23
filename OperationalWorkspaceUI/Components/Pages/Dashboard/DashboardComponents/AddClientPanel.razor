@@ -1,0 +1,64 @@
+﻿@using OperationalWorkspaceApplication.ApplicationState
+@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceUI.UIServices.Actions
+@using OperationalWorkspaceUI.UIServices.System
+@using Radzen
+@inject QuickActionUIService QuickActions
+@inject EmailContextState EmailState
+@inject AppStateContainer AppState
+@inject Radzen.NotificationService NotificationService
+
+<div class="panel add-client-panel">
+    <h5>Add / Link Client</h5>
+
+    @if (AppState.CurrentEmail == null)
+    {
+        <p>No email selected.</p>
+    }
+    else
+    {
+        <div class="client-preview">
+            <p><b>Email:</b> @AppState.CurrentEmail.From</p>
+            @* FIXED: Used BusinessPartnerName as a substitute for SenderName *@
+            <p><b>Name (Detected):</b> @AppState.CurrentEmail.BusinessPartnerName</p>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" @onclick="CreateClient">Create New Client</button>
+            <button class="btn btn-outline-secondary" @onclick="SearchClient">Search Existing</button>
+        </div>
+    }
+</div>
+
+@code {
+    private async Task CreateClient()
+    {
+        try
+        {
+            await QuickActions.CreateClientFromEmailAsync();
+            
+            // FIXED: Radzen uses .Notify instead of .Success
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Client created successfully"
+            });
+        }
+        catch
+        {
+            // FIXED: Radzen uses .Notify instead of .Error
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to create client"
+            });
+        }
+    }
+
+    private async Task SearchClient()
+    {
+        await QuickActions.OpenClientSearchAsync();
+    }
+}

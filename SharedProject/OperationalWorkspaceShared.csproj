@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Accelist.FluentValidation.Blazor" Version="4.0.0" />
+    <PackageReference Include="FluentValidation" Version="12.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+	 
+  </ItemGroup>
+
+</Project>

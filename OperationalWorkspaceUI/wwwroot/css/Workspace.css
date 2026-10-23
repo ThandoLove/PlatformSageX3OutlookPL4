@@ -1,0 +1,77 @@
+﻿/* ========================================================= */
+/* WORKSPACE CONTENT BRANDING TOKENS                         */
+/* ========================================================= */
+:root {
+    --sage-blue: #3B82F6;
+    --sage-orange: #F59E0B;
+    --sage-green: #10B981;
+}
+
+.page-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.dashboard-card {
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--border-light, #E5E7EB);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+    .dashboard-card h3 {
+        font-size: 14px;
+        color: var(--text-muted, #6B7280);
+        margin-bottom: 12px;
+    }
+
+.kpi-value.blue {
+    color: var(--sage-blue);
+    font-weight: 700;
+}
+
+.kpi-value.orange {
+    color: var(--sage-orange);
+    font-weight: 700;
+}
+
+.kpi-value.green {
+    color: var(--sage-green);
+    font-weight: 700;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+    .table th {
+        text-align: left;
+        font-size: 12px;
+        color: var(--text-muted, #6B7280);
+        border-bottom: 1px solid var(--border-light, #E5E7EB);
+        padding: 10px;
+    }
+
+    .table td {
+        padding: 12px 10px;
+        font-size: 13px;
+        border-bottom: 1px solid var(--border-light, #E5E7EB);
+    }
+
+    .table tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+.panel-section {
+    margin-bottom: 24px;
+}

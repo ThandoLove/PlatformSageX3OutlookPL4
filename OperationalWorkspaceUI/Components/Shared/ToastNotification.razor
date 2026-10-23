@@ -1,0 +1,66 @@
+﻿
+@using OperationalWorkspace.Domain.Enums
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@implements IDisposable
+@inject OperationalWorkspaceUI.UIServices.ToastUIService.ToastService CustomToastService
+
+@if (_isVisible)
+{
+    <div class="custom-toast @_levelClass">
+        <div class="toast-icon-wrapper">
+            @if (_levelClass == "toast-success")
+            {
+                @* Use full path for Value and Microsoft.FluentUI.AspNetCore.Components.Color for the enum *@
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size20.CheckmarkCircle())"
+                            Color="@Microsoft.FluentUI.AspNetCore.Components.Color.Success" />
+            }
+            else if (_levelClass == "toast-error")
+            {
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size20.DismissCircle())"
+                            Color="@Microsoft.FluentUI.AspNetCore.Components.Color.Error" />
+            }
+            else
+            {
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size20.Info())"
+                            Color="@Microsoft.FluentUI.AspNetCore.Components.Color.Accent" />
+            }
+        </div>
+
+        <div class="toast-content">
+            @_message
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isVisible;
+    private string _message = "";
+    private string _levelClass = "";
+
+    protected override void OnInitialized()
+    {
+        CustomToastService.OnShow += HandleShow;
+        CustomToastService.OnHide += HandleHide;
+    }
+
+    private void HandleShow(string message, ToastLevel level)
+    {
+        _message = message;
+        _levelClass = $"toast-{level.ToString().ToLower()}";
+        _isVisible = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleHide()
+    {
+        _isVisible = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CustomToastService.OnShow -= HandleShow;
+        CustomToastService.OnHide -= HandleHide;
+    }
+}

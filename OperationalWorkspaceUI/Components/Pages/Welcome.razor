@@ -1,0 +1,132 @@
+@page "/welcome"
+@layout EmptyLayout
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+
+<PageTitle>Initializing Workspace</PageTitle>
+
+<div class="bootstrap-shell">
+
+    <div class="bootstrap-card">
+
+        <img src="/images/sage-x3-logo.png"
+             class="bootstrap-logo" />
+
+        <h2>Connecting Outlook Workspace</h2>
+
+        <p>
+            Preparing contextual operational environment...
+        </p>
+
+        <div class="bootstrap-status">
+
+            <div class="status-row">
+                <span>Authentication</span>
+                <span>@AuthenticationStatus</span>
+            </div>
+
+            <div class="status-row">
+                <span>Workspace</span>
+                <span>@WorkspaceStatus</span>
+            </div>
+
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="bootstrap-error">
+                @ErrorMessage
+            </div>
+        }
+
+    </div>
+
+</div>
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private bool _initialized;
+    private bool _disposed;
+
+    private string AuthenticationStatus = "Checking...";
+    private string WorkspaceStatus = "Waiting...";
+
+    private string? ErrorMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _initialized || _disposed)
+            return;
+
+        _initialized = true;
+
+        try
+        {
+            AuthenticationStatus = "Verifying";
+
+            await InvokeAsync(StateHasChanged);
+
+            await Task.Delay(1000);
+
+            if (_disposed)
+                return;
+
+            if (AuthenticationStateTask is null)
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
+            var authState = await AuthenticationStateTask;
+
+            if (_disposed)
+                return;
+
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                AuthenticationStatus = "Authenticated";
+
+                WorkspaceStatus = "Loading Dashboard";
+
+                await InvokeAsync(StateHasChanged);
+
+                await Task.Delay(500);
+
+                Nav.NavigateTo("/dashboard");
+            }
+            else
+            {
+                AuthenticationStatus = "Not Authenticated";
+
+                WorkspaceStatus = "Redirecting";
+
+                await InvokeAsync(StateHasChanged);
+
+                await Task.Delay(500);
+
+                Nav.NavigateTo("/");
+            }
+        }
+        catch (Exception ex)
+        {
+            if (_disposed)
+                return;
+
+            AuthenticationStatus = "Failed";
+
+            ErrorMessage = ex.Message;
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
+}

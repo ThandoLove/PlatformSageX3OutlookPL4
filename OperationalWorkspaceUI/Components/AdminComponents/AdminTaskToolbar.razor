@@ -1,0 +1,118 @@
+﻿@using OperationalWorkspaceUI.State
+
+@inject DashboardState State
+@implements IDisposable
+
+<div class="admin-toolbar">
+    <div class="toolbar-left">
+        <div class="search-container">
+            <i class="search-icon">🔍</i>
+            <input type="text"
+                   placeholder="Search corporate tasks (ID, Subject, Order #)..."
+                   @bind-value="SearchTerm"
+                   @bind-value:event="oninput" />
+        </div>
+    </div>
+
+    <div class="toolbar-right">
+        @* Filter by Employee *@
+        <div class="filter-group">
+            <label>Assigned To</label>
+            <select @onchange="HandleEmployeeChange">
+                <option value="">All Employees</option>
+                @foreach (var user in MockEmployees)
+                {
+                    <option value="@user">@user</option>
+                }
+            </select>
+        </div>
+
+        @* Filter by Department *@
+        <div class="filter-group">
+            <label>Department</label>
+            <select @onchange="HandleDepartmentChange">
+                <option value="All">All Departments</option>
+                <option value="Sales">Sales</option>
+                <option value="Support">Support</option>
+                <option value="Finance">Finance</option>
+            </select>
+        </div>
+
+        @* Quick Action Toggle *@
+        <button class="btn-refresh" @onclick="RefreshDashboard" disabled="@isSyncing">
+            <i>🔄</i> @(isSyncing ? "Syncing..." : "Refresh Queue")
+        </button>
+    </div>
+</div>
+
+@code {
+    private string _searchTerm = "";
+    private bool isSyncing = false;
+
+    private string SearchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            _searchTerm = value;
+            // Link search value change event parameters to our global state properties
+            State.SearchTerm = value;
+            ApplyFilters();
+        }
+    }
+
+    private List<string> MockEmployees = new() { "John Doe", "Jane Smith", "Robert Brown", "Sarah Wilson", "Amit Patel", "Deepa Patel", "John Smith" };
+
+    protected override void OnInitialized() => State.OnChange += Refresh;
+
+    private void Refresh()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleEmployeeChange(ChangeEventArgs e)
+    {
+        // Route employee dropdown changes directly to global state tracking models
+        State.SelectedEmployeeFilter = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void HandleDepartmentChange(ChangeEventArgs e)
+    {
+        // Route department dropdown changes directly to global state tracking models
+        State.SelectedDepartmentFilter = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        State.NotifyStateChanged();
+    }
+
+    private async Task RefreshDashboard()
+    {
+        if (isSyncing) return;
+
+        await InvokeAsync(async () =>
+        {
+            isSyncing = true;
+            StateHasChanged();
+
+            try
+            {
+                await State.LoadDashboardAsync(isAdmin: true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Admin queue load service dropped: {ex.Message}");
+            }
+            finally
+            {
+                isSyncing = false;
+                State.NotifyStateChanged();
+            }
+        });
+    }
+
+    public void Dispose() => State.OnChange -= Refresh;
+}

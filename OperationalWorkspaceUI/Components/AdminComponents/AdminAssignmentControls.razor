@@ -1,0 +1,175 @@
+﻿@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceApplication.Interfaces.IServices
+@using OperationalWorkspaceApplication.Requests
+
+@inject DashboardState State
+@inject ITaskService TaskService
+@implements IDisposable
+
+<div class="admin-action-controls">
+    <div class="controls-header">
+        <i class="admin-shield-icon">🛡️</i>
+        <h5>Administrative Actions</h5>
+    </div>
+
+    <div class="action-body">
+        @if (Task != null)
+        {
+            <div class="control-group">
+                <label>Reassign Specialist</label>
+
+                <div class="input-with-button">
+                    <select @bind="SelectedRecipientEmail"
+                            class="admin-select">
+
+                        <option value="">
+                            Select Employee...
+                        </option>
+
+                        @foreach (var emp in MockSpecialists)
+                        {
+                            <option value="@emp.Email">
+                                @emp.Name (@emp.Department)
+                            </option>
+                        }
+
+                    </select>
+
+                    <button class="btn-primary-admin"
+                            @onclick="ExecuteReassignment"
+                            disabled="@(string.IsNullOrEmpty(SelectedRecipientEmail) || isProcessing)">
+
+                        @(isProcessing ? "..." : "Assign")
+
+                    </button>
+                </div>
+            </div>
+
+            <div class="quick-actions-row">
+
+                <button class="btn-outline-danger"
+                        @onclick="ExecuteEscalation"
+                        disabled="@isProcessing">
+
+                    Force Escalate
+
+                </button>
+
+                <button class="btn-outline-warning"
+                        @onclick="AdjustSla"
+                        disabled="@isProcessing">
+
+                    Extend SLA
+
+                </button>
+
+            </div>
+        }
+    </div>
+</div>
+@code {
+    [Parameter]
+    public TaskDto? Task { get; set; }
+
+    private string SelectedRecipientEmail { get; set; } = "";
+
+    private bool isProcessing = false;
+
+    private readonly List<(string Name, string Email, string Department)> MockSpecialists = new()
+    {
+        ("John Doe", "john.doe@company.com", "Sales"),
+        ("Jane Smith", "jane.smith@company.com", "Support"),
+        ("Sarah Wilson", "sarah.w@company.com", "Logistics"),
+        ("Alex Turner", "alex.turner@company.com", "Engineering")
+    };
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += Refresh;
+    }
+
+    private void Refresh()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ExecuteReassignment()
+    {
+        if (Task == null || string.IsNullOrWhiteSpace(SelectedRecipientEmail))
+            return;
+
+        isProcessing = true;
+
+        try
+        {
+            var request = new DelegateTaskRequest
+            {
+                TaskId = Task.Id,
+                RecipientEmail = SelectedRecipientEmail
+            };
+
+            var response = await TaskService.DelegateAsync(request, CancellationToken.None);
+
+            if (response != null && response.IsSuccess)
+            {
+                var specialist = MockSpecialists.FirstOrDefault(x => x.Email == SelectedRecipientEmail);
+
+                Task.AssignedTo = specialist.Name ?? SelectedRecipientEmail;
+                Task.Status = OperationalWorkspace.Domain.Enums.TaskStatus.Assigned;
+                Task.UpdatedDate = DateTime.UtcNow;
+
+                // FIX: Unified Cross-State injection logic maps assignments safely into the Employee dashboard array
+                if (State.MyTasks == null)
+                {
+                    State.MyTasks = new List<TaskDto>();
+                }
+
+                bool alreadyInEmployeeQueue = State.MyTasks.Any(t => t.Id == Task.Id || (t.Title == Task.Title && t.CompanyName == Task.CompanyName));
+                if (!alreadyInEmployeeQueue)
+                {
+                    State.MyTasks.Insert(0, Task);
+                }
+
+                State.NotifyStateChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reassigning task inside assignment controls: {ex.Message}");
+        }
+        finally
+        {
+            isProcessing = false;
+            State.NotifyStateChanged();
+        }
+    }
+
+    private void ExecuteEscalation()
+    {
+        if (Task == null)
+            return;
+
+        Task.IsEscalated = true;
+        Task.Priority = OperationalWorkspace.Domain.Enums.TaskPriority.Urgent;
+        Task.UpdatedDate = DateTime.UtcNow;
+
+        State.NotifyStateChanged();
+    }
+
+    private void AdjustSla()
+    {
+        if (Task == null)
+            return;
+
+        Task.DueDate = (Task.DueDate ?? DateTime.UtcNow).AddHours(24);
+        Task.UpdatedDate = DateTime.UtcNow;
+
+        State.NotifyStateChanged();
+    }
+
+    public void Dispose()
+    {
+        State.OnChange -= Refresh;
+    }
+}

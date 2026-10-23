@@ -1,0 +1,52 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+
+<div style="margin-bottom: 12px; width: 100%;">
+    @if (Type == "textarea")
+    {
+        <FluentTextArea Label="@Label"
+                        @bind-Value="@Value"
+                        Rows="4"
+                        Resize="TextAreaResize.Vertical"
+                        Style="width: 100%;" />
+    }
+    else if (Type == "select" && Options != null)
+    {
+        @* FIXED: Added TOption="string" and explicit binding parameters *@
+        <FluentSelect Label="@Label"
+                      TOption="string"
+                      Value="@Value"
+                      ValueChanged="@(val => ValueChanged.InvokeAsync(val))"
+                      Style="width: 100%;">
+            @foreach (var opt in Options)
+            {
+                <FluentOption TOption="string" Value="@opt.Key">@opt.Value</FluentOption>
+            }
+        </FluentSelect>
+    }
+    else
+    {
+        <FluentTextField Label="@Label"
+                         Type="@GetFluentType(Type)"
+                         @bind-Value="@Value"
+                         Style="width: 100%;" />
+    }
+</div>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string Type { get; set; } = "text";
+    
+    // Support two-way binding (@bind-Value)
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter] public List<KeyValuePair<string, string>>? Options { get; set; }
+
+    private TextFieldType GetFluentType(string type) => type.ToLower() switch
+    {
+        "password" => TextFieldType.Password,
+        "email" => TextFieldType.Email,
+        "tel" => TextFieldType.Tel,
+        _ => TextFieldType.Text
+    };
+}

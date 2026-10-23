@@ -1,0 +1,103 @@
+﻿@page "/forms/admin-create-task"
+@page "/taskpane/task/create"
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceUI.UIServices.DashboardUI
+@using OperationalWorkspace.Domain.Enums
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using OperationalWorkspaceUI.Components.Pages.Forms.FormComponents
+
+@inject DashboardState State
+@inject DashboardUIService DashboardService
+@inject IJSRuntime JS
+
+<FormSection Title="Create Task (Admin)" 
+             SubmitLabel="Create Task" 
+             OnSubmit="HandleCreateTask">
+
+    <div class="sage-form-group">
+        <label class="section-title">SUBJECT</label>
+        <FluentTextField @bind-Value="_newTask.Title" 
+                         Placeholder="e.g. Follow up on quote..." 
+                         FullWidth="true" />
+    </div>
+
+    <div class="sage-form-group" style="margin-top: 20px;">
+        <label class="section-title">ASSIGN TO</label>
+        <FluentSelect TOption="string" Style="width: 100%;" @bind-Value="_newTask.AssignedTo">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Slot="start" />
+            <FluentOption TOption="string" Value="Admin">Admin</FluentOption>
+            <FluentOption TOption="string" Value="CurrentUser">Current User</FluentOption>
+            <FluentOption TOption="string" Value="Sarah Johnson">Sarah Johnson</FluentOption>
+        </FluentSelect>
+    </div>
+
+    <div class="form-grid-2-col" style="margin-top: 20px;">
+        <div class="sage-form-group">
+            <label class="section-title">DUE DATE</label>
+            <FluentDatePicker @bind-Value="_localDueDate" Style="width: 100%;" />
+        </div>
+
+        <div class="sage-form-group">
+            <label class="section-title">PRIORITY</label>
+            <div class="priority-selector">
+                @foreach (var p in new[] { TaskPriority.Low, TaskPriority.Medium, TaskPriority.High })
+                {
+                    <button type="button"
+                            class="priority-btn @(GetPriorityClass(p)) @(_newTask.Priority == p ? "active" : "")"
+                            @onclick="() => _newTask.Priority = p">
+                        @p.ToString()
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</FormSection>
+
+@code {
+    private TaskDto _newTask = new() { DueDate = DateTime.Today, Priority = TaskPriority.Medium, AssignedTo = "Admin" };
+    private DateTime? _localDueDate = DateTime.Today;
+    private async Task HandleCreateTask()
+    {
+        if (string.IsNullOrWhiteSpace(_newTask.Title))
+            return;
+
+        _newTask.DueDate = _localDueDate ?? DateTime.Today;
+
+        State.AllTasks.Add(new TaskDto
+        {
+            Id = Guid.NewGuid(),
+            Title = _newTask.Title,
+            DueDate = _newTask.DueDate,
+            Priority = _newTask.Priority,
+            AssignedTo = _newTask.AssignedTo,
+            Completed = false,
+            CreatedDate = DateTime.UtcNow,
+            UpdatedDate = DateTime.UtcNow
+        });
+
+        await JS.InvokeVoidAsync("showToast", $"Task assigned to {_newTask.AssignedTo}");
+
+        _newTask = new TaskDto
+        {
+            DueDate = DateTime.Today,
+            Priority = TaskPriority.Medium,
+            AssignedTo = "Admin"
+        };
+
+        _localDueDate = DateTime.Today;
+
+        await State.LoadDashboardAsync();
+    }
+    
+    private string GetPriorityClass(TaskPriority p) => p switch
+    {
+        TaskPriority.High => "high-btn",
+        TaskPriority.Medium => "medium-btn",
+        TaskPriority.Low => "low-btn",
+        _ => ""
+    };
+}
+

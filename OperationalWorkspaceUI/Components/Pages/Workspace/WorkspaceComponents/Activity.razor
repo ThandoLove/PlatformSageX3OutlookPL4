@@ -1,0 +1,224 @@
+﻿@page "/activities"
+
+@rendermode InteractiveServer
+
+@using OperationalWorkspaceUI.State
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OperationalWorkspaceApplication.DTOs
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@implements IDisposable
+
+@inject WorkspaceState State
+@inject OperationalWorkspaceUI.UIServices.Workspace.ActivityUIService ActivityService
+
+<div class="page-layout">
+
+    @* HEADER SECTION *@
+    <div class="activity-header">
+        <div>
+            <h2 class="header-title">Activity Log</h2>
+            <p class="header-sub">System-wide activity tracking</p>
+        </div>
+        <div class="header-actions">
+            @* FIXED: Wired interactive spinning state modifiers to FluentButton template values *@
+            <FluentButton Appearance="Appearance.Outline"
+                          IconStart="@(isSyncing ? new Icons.Regular.Size20.ArrowClockwise() : new Icons.Regular.Size20.ArrowClockwise())"
+                          Disabled="@isSyncing"
+                          OnClick="HandleLogReloadAsync">
+                @(isSyncing ? "Syncing..." : "Refresh")
+            </FluentButton>
+        </div>
+    </div>
+
+    @* SEARCH & FILTER BAR *@
+    <div class="filter-bar">
+        <input type="text"
+               placeholder="Search logs..."
+               @bind="SearchQuery"
+               @bind:event="oninput"
+               class="search-input" />
+
+        <select @bind="SelectedAction" class="filter-select">
+            <option value="">All Actions</option>
+            @foreach (var action in UniqueActions)
+            {
+                <option value="@action">@action</option>
+            }
+        </select>
+    </div>
+
+    @* DATA LOADING LOGIC *@
+    @if (State.ActivityLogs == null)
+    {
+        <div class="loading-container">
+            <FluentProgressRing />
+        </div>
+    }
+    else if (!FilteredLogs.Any())
+    {
+        <FluentCard Class="empty-card">
+            <FluentIcon Value="@(new Icons.Regular.Size32.Info())" Color="@Color.Neutral" />
+            <p>No activities found matching your criteria.</p>
+        </FluentCard>
+    }
+    else
+    {
+        @* DATA TABLE *@
+        <div class="table-container">
+            <table class="activity-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in FilteredLogs)
+                    {
+                        <tr>
+                            <td class="col-time">@log.Timestamp.ToString("g")</td>
+                            <td class="col-user"><strong>@log.CreatedBy</strong></td>
+                            <td class="col-action">
+                                <span class="badge @GetBadgeClass(log.Action)">
+                                    @log.Action
+                                </span>
+                            </td>
+                            <td class="col-target">@log.Title</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private string SearchQuery = "";
+    private string SelectedAction = "";
+    private bool isSyncing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.OnChange += Refresh;
+
+        if (State.ActivityLogs == null || !State.ActivityLogs.Any())
+        {
+            await Reload();
+        }
+    }
+
+    private void Refresh()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleLogReloadAsync()
+    {
+        if (isSyncing) return;
+
+        // FIXED: Dispatched asynchronously to safely update internal database logs while forcing a hard interface redraw pass
+        await InvokeAsync(async () =>
+        {
+            isSyncing = true;
+            StateHasChanged();
+
+            try
+            {
+                await Reload();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Audit logging thread refresh pass failed: {ex.Message}");
+            }
+            finally
+            {
+                isSyncing = false;
+                StateHasChanged(); // Hyper-lock thread flush repaints audit rows layout data grid instantly
+            }
+        });
+    }
+
+    private async Task Reload()
+    {
+        var databaseLogs = await ActivityService.GetActivitiesAsync();
+
+        if (State.ActivityLogs == null)
+        {
+            State.ActivityLogs = new List<ActivityDto>();
+        }
+
+        foreach (var log in databaseLogs)
+        {
+            if (!State.ActivityLogs.Any(l => l.Id == log.Id))
+            {
+                State.ActivityLogs.Add(log);
+            }
+        }
+
+        State.Notify();
+    }
+
+    // FIXED: Strict structural validation gate filters out routine navigation loops noise
+    private IEnumerable<ActivityDto> FilteredLogs
+    {
+        get
+        {
+            var combinedList = new List<ActivityDto>();
+
+            // 1. Fetch standard historical database logs context blocks
+            if (State.ActivityLogs != null)
+            {
+                combinedList.AddRange(State.ActivityLogs);
+            }
+
+            // 2. Extract and sanitize live shared cross-page traces
+            if (State.SharedSystemLogs != null)
+            {
+                var translatedSharedLogs = State.SharedSystemLogs.Select(sl => new ActivityDto
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedBy = "System Agent",
+                    Action = sl.Category,       // Maps "Contact", "Ticket", or "Order"
+                    Title = sl.Description,     // Detailed operational text description string
+                    Timestamp = sl.Timestamp
+                });
+
+                combinedList.AddRange(translatedSharedLogs);
+            }
+
+            return combinedList
+       .Where(l => !string.IsNullOrEmpty(l.Title))
+       .Where(l => !l.Title.Contains("loaded", StringComparison.OrdinalIgnoreCase))
+       .Where(l => string.IsNullOrWhiteSpace(SearchQuery) ||
+                    l.Title.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    l.CreatedBy.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+       .Where(l => string.IsNullOrWhiteSpace(SelectedAction) ||
+                    l.Action.Equals(SelectedAction, StringComparison.OrdinalIgnoreCase))
+       .OrderByDescending(l => l.Timestamp);
+        }
+    }
+
+
+    private List<string> UniqueActions => (State.ActivityLogs ?? Enumerable.Empty<ActivityDto>())
+        .Select(l => l.Action)
+        .Distinct()
+        .OrderBy(a => a)
+        .ToList();
+
+    private string GetBadgeClass(string action) => action.ToLower() switch
+    {
+        var a when a.Contains("delete") || a.Contains("removed") => "badge-danger",
+        var a when a.Contains("create") || a.Contains("added") || a.Contains("upload") => "badge-success",
+        var a when a.Contains("update") || a.Contains("edit") => "badge-warning",
+        var a when a.Contains("send") || a.Contains("email") || a.Contains("attach") => "badge-info",
+        _ => "badge-neutral"
+    };
+
+    public void Dispose()
+    {
+        State.OnChange -= Refresh;
+    }
+}

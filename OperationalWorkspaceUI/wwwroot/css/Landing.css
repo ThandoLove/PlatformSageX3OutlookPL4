@@ -1,0 +1,261 @@
+﻿/* ========================================================= 
+   SAGE X3 LANDING PAGE - PRODUCTION READY FIX
+   ========================================================= */
+
+:root {
+    --sage-primary: #003366;
+    --sage-accent: #0052cc;
+    --sage-accent-hover: #0747a6;
+    --sage-bg-light: #f8fafc;
+    --sage-bg-dark: #0f172a;
+    --card-bg-light: #ffffff;
+    --card-bg-dark: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+}
+
+/* 1. GLOBAL SCROLL RECOVERY */
+html, body {
+    height: auto !important;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto !important; /* Forces scrollbar to work */
+}
+
+/* 2. LANDING CONTAINER */
+.landing-page {
+    background: var(--sage-bg-dark);
+    min-height: 100vh;
+    display: block; /* Allows natural flow instead of locking to screen */
+    padding: 20px 20px 120px 20px; /* Big bottom padding for button visibility */
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    position: relative;
+    transition: background 0.3s ease;
+    z-index: 1;
+}
+
+body.dark-mode .landing-page {
+    background: var(--sage-bg-dark);
+    color: #f8fafc;
+}
+
+/* 3. CONTENT CENTERING WRAPPER */
+.landing-content {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10; /* Keeps content above any background fluff */
+}
+
+/* 4. LAYER DEPTH & CLICKABILITY */
+.theme-bar, .brand-header, .hero-text, .benefit-grid, .hero-actions {
+    position: relative;
+    z-index: 10 !important;
+}
+
+/* 5. THEME TOGGLE */
+.theme-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.theme-toggle-btn {
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+body.dark-mode .theme-toggle-btn {
+    background: var(--card-bg-dark);
+    color: white;
+    border-color: #334155;
+}
+
+/* 6. HERO SECTION */
+.brand-header {
+    margin-bottom: 20px;
+}
+
+    .brand-header img {
+        height: 32px;
+    }
+
+.hero-text p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.hero-text h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--sage-primary);
+    margin: 0;
+    line-height: 1.1;
+}
+
+.hero-text h2 {
+    font-size: 1.6rem;
+    color: #1e293b;
+    margin-top: 5px;
+    font-weight: 600;
+}
+
+body.dark-mode .hero-text h1 {
+    color: #3b82f6;
+}
+
+body.dark-mode .hero-text h2 {
+    color: #f8fafc;
+}
+
+/* 7. BENEFIT GRID (2x2) */
+.benefit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 30px;
+}
+
+.benefit-card {
+    background: var(--card-bg-light);
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+body.dark-mode .benefit-card {
+    background: var(--card-bg-dark);
+    border-color: #334155;
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    font-size: 1.2rem;
+}
+
+.icon-blue {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.icon-green {
+    background: #f0fdf4;
+    color: #22c55e;
+}
+
+.icon-purple {
+    background: #faf5ff;
+    color: #a855f7;
+}
+
+.icon-orange {
+    background: #fff7ed;
+    color: #f97316;
+}
+
+.benefit-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.benefit-card p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* 8. SIGN IN BUTTON */
+.hero-actions {
+    margin-top: 35px;
+}
+
+.btn-sage-primary {
+    background: var(--sage-accent);
+    color: white !important;
+    border: none;
+    padding: 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+    .btn-sage-primary:hover {
+        background: var(--sage-accent-hover);
+    }
+
+/* 9. FOOTER BG (PASS-THROUGH CLICKS) */
+.landing-footer-bg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(to top, rgba(59, 130, 246, 0.08), transparent);
+    z-index: 0;
+    pointer-events: none; /* Clicks go straight through to the button */
+}
+
+/* 10. MODAL FIXES */
+.modal-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-backdrop {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-window {
+    position: relative;
+    background: white;
+    width: 95%;
+    max-width: 450px;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    overflow: hidden;
+}
+
+body.dark-mode .modal-window {
+    background: var(--card-bg-dark);
+    color: white;
+}
+.landing-cta {
+    text-align: center;
+    margin-top: 48px;
+}

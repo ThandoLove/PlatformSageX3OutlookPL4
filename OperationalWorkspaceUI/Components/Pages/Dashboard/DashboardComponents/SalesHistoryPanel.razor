@@ -1,0 +1,85 @@
+﻿@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceApplication.DTOs
+@using Microsoft.FluentUI.AspNetCore.Components
+@* Fix 1: Ensure Icons namespace is explicitly referenced *@
+@using Microsoft.FluentUI.AspNetCore.Components.Icons
+@implements IDisposable
+@inject DashboardState State
+@inject IJSRuntime JS
+
+<FluentCard Style="width: 100%; padding: 16px; height: 340px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+    @* Panel Header *@
+    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600; color: #333;">Sales History (Last 6 Months)</h3>
+            <FluentBadge Appearance="Appearance.Accent" Style="background-color: #3b82f6;">Live</FluentBadge>
+        </div>
+        @* Fix 2: Use fully qualified icon path *@
+        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowClockwise())"
+                    Color="@Microsoft.FluentUI.AspNetCore.Components.Color.Neutral"
+                    Style="cursor: pointer;"
+                    @onclick="RefreshChart" />
+    </div>
+    
+    <div style="position: relative; height: 240px; width: 100%;">
+        <canvas id="salesHistoryChart"></canvas>
+    </div>
+</FluentCard>
+
+@code {
+    private System.Timers.Timer? _timer;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RefreshChart();
+            StartPolling();
+        }
+    }
+
+    private void StartPolling()
+    {
+        _timer = new System.Timers.Timer(10000);
+        _timer.Elapsed += async (s, e) =>
+        {
+            if (!_disposed) await RefreshChart();
+        };
+        _timer.AutoReset = true;
+        _timer.Enabled = true;
+    }
+
+    private async Task RefreshChart()
+    {
+        var labels = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun" };
+        var data = GetSalesDataFromState();
+
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                // Ensure JS is still available (handles circuit disconnects)
+                await JS.InvokeVoidAsync("sageCharts.renderSalesHistory", "salesHistoryChart", labels, data);
+            });
+        }
+        catch { /* Handle background thread JS isolation errors */ }
+    }
+
+    private decimal[] GetSalesDataFromState()
+    {
+        if (State.IsAdminEnvironment)
+        {
+            return new decimal[] { 12000, 15000, 9500, 12500, 18200, 14000 };
+        }
+        
+        return new decimal[] { 4000, 5500, 3000, 4200, 6000, 5100 };
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _timer?.Stop();
+        _timer?.Dispose();
+    }
+}

@@ -1,0 +1,207 @@
+﻿@page "/admin-tasks"
+@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceUI.Components.AdminComponents
+@using OperationalWorkspaceUI.Components.Pages.Forms
+@using TaskDto = OperationalWorkspaceApplication.DTOs.TaskDto
+@using OperationalWorkspace.Domain.Enums
+@using TaskStatus = OperationalWorkspace.Domain.Enums.TaskStatus
+@implements IDisposable
+@inject DashboardState State
+@inject OperationalWorkspaceUI.UIServices.System.ModalService ModalService
+
+<div class="hub-viewport-lock">
+    <header class="hub-header">
+        <div class="header-left">
+            <h1>Tasks Hub</h1>
+            <button class="btn-new-task" @onclick="OpenCreateTaskModalAsync">+ New Task</button>
+        </div>
+        <div class="header-right">
+            <button class="btn-ghost @(isFilterActive ? "filter-engaged" : "")" @onclick="ToggleGlobalFilters">
+                <i class="oi oi-fullscreen-exit"></i> Filters
+            </button>
+
+            <div class="dropdown-wrapper">
+                <button class="btn-ghost" @onclick="ToggleGroupingMenu">
+                    Group: @ActiveGroupingCriterion <i class="oi oi-chevron-bottom"></i>
+                </button>
+                @if (showGroupingMenu)
+                {
+                    <div class="header-context-menu animate-pop">
+                        <div class="menu-item @(ActiveGroupingCriterion == "Status" ? "selected" : "")" @onclick='() => ChangeGroupingCriterion("Status")'>Group by Status</div>
+                        <div class="menu-item @(ActiveGroupingCriterion == "Priority" ? "selected" : "")" @onclick='() => ChangeGroupingCriterion("Priority")'>Group by Priority</div>
+                    </div>
+                }
+            </div>
+
+            <div class="dropdown-wrapper">
+                <span class="hub-dots" @onclick="ToggleEllipsisMenu">...</span>
+                @if (showEllipsisMenu)
+                {
+                    <div class="header-context-menu right-align animate-pop">
+                        <div class="menu-item" @onclick="ExportQueueToCsv">📥 Export Queue Data</div>
+                        <div class="menu-item" @onclick="ClearCompletedFromView">🧹 Clear Done Cards</div>
+                        <div class="menu-item" @onclick="ToggleCompactMode">⚙️ Toggle Compact Density</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </header>
+
+    <AdminTaskToolbar />
+
+    @if (isFilterActive)
+    {
+        <div class="global-filter-expansion-tray animate-slide">
+            <div class="tray-inner">
+                <div class="filter-cell">
+                    <label>URGENCY footprint</label>
+                    <select @bind="GlobalPriorityFilter">
+                        <option value="All">All Priorities</option>
+                        <option value="Urgent">Urgent Only</option>
+                        <option value="High">High Only</option>
+                        <option value="Medium">Medium Only</option>
+                    </select>
+                </div>
+                <div class="filter-cell">
+                    <label>TIMELINE STATE</label>
+                    <select @bind="GlobalSlaFilter">
+                        <option value="All">All Cards</option>
+                        <option value="Overdue">Overdue Alerts</option>
+                        <option value="Healthy">Within SLA Target</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="hub-main-layout">
+        <aside class="col-oversight">
+            <AdminSlaMonitor />
+            <AdminQueuePanel />
+            <AdminAnalyticsPanel />
+        </aside>
+
+        <main class="col-board">
+            <div class="board-canvas">
+                @if (ActiveGroupingCriterion == "Status")
+                {
+                    <KanbanColumn Title="Inbox / Unassigned" Count="@GetTasksForColumn(TaskStatus.Open).Count()" Tasks="@GetTasksForColumn(TaskStatus.Open)" OnSelect="State.SetSelectedTask" />
+                    <KanbanColumn Title="In Progress" Count="@GetTasksForColumn(TaskStatus.Assigned).Count()" Tasks="@GetTasksForColumn(TaskStatus.Assigned)" OnSelect="State.SetSelectedTask" />
+                    <KanbanColumn Title="Waiting / Review" Count="@GetTasksForColumn(TaskStatus.PendingApproval).Count()" Tasks="@GetTasksForColumn(TaskStatus.PendingApproval)" OnSelect="State.SetSelectedTask" />
+                }
+                else
+                {
+                    <KanbanColumn Title="🔴 Urgent Priority" Count="@GetTasksByPriority(TaskPriority.Urgent).Count()" Tasks="@GetTasksByPriority(TaskPriority.Urgent)" OnSelect="State.SetSelectedTask" />
+                    <KanbanColumn Title="🟡 High Priority" Count="@GetTasksByPriority(TaskPriority.High).Count()" Tasks="@GetTasksByPriority(TaskPriority.High)" OnSelect="State.SetSelectedTask" />
+                    <KanbanColumn Title="🔵 Normal Priority" Count="@GetTasksByPriority(TaskPriority.Medium).Count()" Tasks="@GetTasksByPriority(TaskPriority.Medium)" OnSelect="State.SetSelectedTask" />
+                }
+            </div>
+        </main>
+
+        <aside class="col-details">
+            <AdminTaskDetailsPanel Task="@(State.SelectedTask ?? FilteredTasksArray.FirstOrDefault(t => t.CompanyName == "Brightwave Solutions"))" OnActionsUpdated="Refresh" />
+        </aside>
+    </div>
+
+    @* 🚀 DELETED THE HARDCODED BROKEN INLINE OVERLAY MARKUP ENTIRELY! *@
+</div>
+
+@code {
+    private bool isFilterActive = false;
+    private bool showGroupingMenu = false;
+    private bool showEllipsisMenu = false;
+
+    private string ActiveGroupingCriterion = "Status";
+    private string GlobalPriorityFilter = "All";
+    private string GlobalSlaFilter = "All";
+
+    protected override void OnInitialized()
+    {
+        State.OnChange += Refresh;
+
+        if (State.AllTasks == null || !State.AllTasks.Any())
+        {
+            LoadAdminTasksData();
+        }
+    }
+
+    private void LoadAdminTasksData()
+    {
+        State.AllTasks = new List<TaskDto> {
+            new TaskDto { Id = Guid.NewGuid(), Title = "Issue with Invoice INV-100123", CompanyName = "Brightwave Solutions", Priority = TaskPriority.Urgent, Status = TaskStatus.Assigned, AssignedTo = "Amit Patel", CreatedDate = DateTime.UtcNow.AddHours(-12), DueDate = DateTime.UtcNow.AddHours(-2) },
+            new TaskDto { Id = Guid.NewGuid(), Title = "Inquiry about Product XYZ", CompanyName = "Tech Innovations Inc.", Priority = TaskPriority.High, Status = TaskStatus.Open, AssignedTo = "Deepa Patel", CreatedDate = DateTime.UtcNow.AddHours(-4), DueDate = DateTime.UtcNow.AddHours(8) },
+            new TaskDto { Id = Guid.NewGuid(), Title = "Develop QTE-7823 Renewal", CompanyName = "Tech Innovations Inc.", Priority = TaskPriority.Medium, Status = TaskStatus.Assigned, AssignedTo = "John Smith", CreatedDate = DateTime.UtcNow.AddHours(-2), DueDate = DateTime.UtcNow.AddHours(22) }
+        };
+    }
+
+    private async Task OpenCreateTaskModalAsync()
+    {
+        // 🚀 ROUTED: Handshakes cleanly with your shared global ModalService singleton instance!
+        await ModalService.ShowModal("Create New Corporate Task", builder =>
+        {
+            builder.OpenComponent<CreateTaskForm>(0);
+            builder.CloseComponent();
+        });
+    }
+
+    private IEnumerable<TaskDto> FilteredTasksArray
+    {
+        get
+        {
+            var collection = State.AllTasks ?? Enumerable.Empty<TaskDto>();
+
+            if (!string.IsNullOrWhiteSpace(State.SearchTerm))
+            {
+                collection = collection.Where(t =>
+                    t.Title.Contains(State.SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    t.CompanyName.Contains(State.SearchTerm, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(State.SelectedEmployeeFilter))
+            {
+                collection = collection.Where(t => t.AssignedTo == State.SelectedEmployeeFilter);
+            }
+
+            if (GlobalPriorityFilter != "All")
+            {
+                collection = collection.Where(t => t.Priority.ToString().Equals(GlobalPriorityFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (GlobalSlaFilter == "Overdue")
+            {
+                collection = collection.Where(t => t.DueDate.HasValue && DateTime.UtcNow > t.DueDate.Value);
+            }
+            else if (GlobalSlaFilter == "Healthy")
+            {
+                collection = collection.Where(t => !t.DueDate.HasValue || DateTime.UtcNow <= t.DueDate.Value);
+            }
+
+            return collection;
+        }
+    }
+
+    private IEnumerable<TaskDto> GetTasksForColumn(TaskStatus statusTarget) =>
+        FilteredTasksArray.Where(t => t.Status == statusTarget);
+
+    private IEnumerable<TaskDto> GetTasksByPriority(TaskPriority priorityTarget) =>
+        FilteredTasksArray.Where(t => t.Priority == priorityTarget);
+
+    private void ToggleGlobalFilters() => isFilterActive = !isFilterActive;
+    private void ToggleGroupingMenu() { showGroupingMenu = !showGroupingMenu; showEllipsisMenu = false; }
+    private void ToggleEllipsisMenu() { showEllipsisMenu = !showEllipsisMenu; showGroupingMenu = false; }
+
+    private void ChangeGroupingCriterion(string selectedCriterion)
+    {
+        ActiveGroupingCriterion = selectedCriterion;
+        showGroupingMenu = false;
+        StateHasChanged();
+    }
+
+    private void ExportQueueToCsv() { showEllipsisMenu = false; }
+    private void ClearCompletedFromView() { showEllipsisMenu = false; }
+    private void ToggleCompactMode() { showEllipsisMenu = false; }
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => State.OnChange -= Refresh;
+}

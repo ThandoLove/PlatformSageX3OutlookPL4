@@ -1,0 +1,24 @@
+﻿<!-- CODE START: MetricItem.razor -->
+<!-- CODE START: MetricItem.razor -->
+
+<div class="metric-item">
+    <span class="metric-label">@Label</span>
+    <span class="metric-value">@FormattedValue</span>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public object? Value { get; set; } // Changed to object? for safety
+
+    private string FormattedValue => Value switch
+    {
+        null => "-",
+        decimal d => d.ToString("N2"),
+        int i => i.ToString("N0"),
+        DateTime dt => dt.ToShortDateString(),
+        // FIX: Add ?? string.Empty to ensure a string is ALWAYS returned
+        _ => Value.ToString() ?? string.Empty
+    };
+}
+
+<!-- CODE END -->

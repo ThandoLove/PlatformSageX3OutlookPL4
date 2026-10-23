@@ -1,0 +1,75 @@
+﻿/* ========================================================= 
+   FORMS & INPUTS (Cleaned & Unified)
+   ========================================================= */
+
+.form-section {
+    background: var(--bg-card); /* Pulls from your master app.css */
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.form-field {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+    .form-field label {
+        margin-bottom: 4px;
+        font-size: 13px;
+        color: var(--text-secondary); /* Standard muted grey from app.css */
+    }
+
+/* THE FIX: One definition using variables for background and text */
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-main); /* Slightly off-white/navy depending on theme */
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Placeholder color for better UX */
+    .form-control::placeholder {
+        color: var(--text-secondary);
+        opacity: 0.6;
+    }
+
+/* BUTTONS & TOOLBARS */
+.form-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-create {
+    width: 100%;
+    background-color: var(--accent-blue);
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+    .btn-create:hover {
+        background-color: var(--accent-blue-hover);
+    }
+
+/* Form Grouping for Inline Layouts */
+.form-group {
+    margin-bottom: 12px;
+}

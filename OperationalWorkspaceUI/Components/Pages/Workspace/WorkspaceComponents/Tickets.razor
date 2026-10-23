@@ -1,0 +1,97 @@
+﻿@page "/tickets"
+
+@rendermode InteractiveServer
+
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceUI.Models.Constant
+@using OperationalWorkspaceUI.State
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@implements IDisposable
+@inject WorkspaceState WState
+@inject NavigationManager NavManager
+
+<div class="tickets-container">
+    <div class="page-header">
+        <div class="header-text">
+            <h2>Support Tickets</h2>
+            <p>Manage and track all customer support requests</p>
+        </div>
+        <FluentButton Appearance="Appearance.Accent"
+                      IconStart="@(new Icons.Regular.Size20.Add())"
+                      OnClick="@(() => NavManager.NavigateTo(AppRoutes.Tickets + "/new"))">
+            New Ticket
+        </FluentButton>
+    </div>
+
+    @* TABS FOR FILTERING STATUS *@
+    <div style="margin-bottom: 15px;">
+        <FluentTabs @bind-ActiveTabId="@_activeTab" OnTabSelect="@HandleTabChange">
+            <FluentTab Id="active" Label="Active Requests" />
+            <FluentTab Id="closed" Label="Closed / Resolved" />
+        </FluentTabs>
+    </div>
+
+    <FluentCard Class="grid-card">
+        <FluentDataGrid Items="@FilteredTickets" ResizableColumns="true" Pagination="@_pagination" TGridItem="TicketDto">
+            <PropertyColumn Property="@(t => t.TicketNumber)" Title="ID" Sortable="true" />
+            <PropertyColumn Property="@(t => t.Title)" Title="Title" Sortable="true" />
+            <PropertyColumn Property="@(t => t.CustomerName)" Title="Customer" Sortable="true" />
+            
+            <TemplateColumn Title="Priority" Sortable="true">
+                <span class="prio-badge @context.Priority.ToLower()">@context.Priority</span>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Status">
+                <FluentBadge Appearance="Appearance.Neutral"
+                             Fill="@(context.Status == "Closed" || context.Status == "Resolved" ? "#64748b" : "#005fb8")"
+                             Color="white">
+                    @context.Status
+                </FluentBadge>
+            </TemplateColumn>
+
+            <PropertyColumn Property="@(t => t.CreatedAt.ToShortDateString())" Title="Created" Sortable="true" />
+
+            <TemplateColumn Title="Actions" Align="Align.End">
+                <FluentButton Appearance="Appearance.Stealth"
+                              IconStart="@(new Icons.Regular.Size16.Edit())"
+                              OnClick="@(() => EditTicket(context))" />
+            </TemplateColumn>
+        </FluentDataGrid>
+
+        <FluentPaginator State="@_pagination" />
+    </FluentCard>
+</div>
+
+@code {
+    private string _activeTab = "active";
+    private PaginationState _pagination = new PaginationState { ItemsPerPage = 10 };
+
+    // Pointing directly to the global list in WorkspaceState with dynamic status filtering
+    private IQueryable<TicketDto> FilteredTickets => _activeTab == "active"
+        ? WState.Tickets.Where(t => t.Status != "Closed" && t.Status != "Resolved").AsQueryable()
+        : WState.Tickets.Where(t => t.Status == "Closed" || t.Status == "Resolved").AsQueryable();
+
+    protected override void OnInitialized()
+    {
+        // Listen for changes (like when a new ticket is added from the form page)
+        WState.OnChange += Refresh;
+    }
+
+    private void Refresh()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleTabChange(FluentTab tab)
+    {
+        // Force refresh when switching tabs
+        StateHasChanged();
+    }
+
+    private void EditTicket(TicketDto ticket) =>
+        NavManager.NavigateTo($"{AppRoutes.Tickets}/edit/{ticket.Id}");
+
+    public void Dispose() => WState.OnChange -= Refresh;
+}

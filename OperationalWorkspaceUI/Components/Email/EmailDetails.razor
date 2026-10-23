@@ -1,0 +1,25 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using OperationalWorkspaceApplication.DTOs
+@using Orientation = Microsoft.FluentUI.AspNetCore.Components.Orientation
+
+
+<FluentCard Style="margin-bottom: 10px; padding: 12px;">
+    <FluentStack Orientation="Orientation.Vertical" Spacing="2">
+        <FluentLabel Typo="Typography.Body" Style="font-weight: 600; color: #005A9E;">
+            Subject: @(Email?.Subject ?? "No Subject")
+        </FluentLabel>
+        
+        <FluentDivider Role="DividerRole.Presentation" />
+        
+        <FluentStack Orientation="Orientation.Horizontal" Justify="JustifyContent.SpaceBetween">
+            <FluentLabel Typo="Typography.Body" Style="font-size: 0.75rem;">
+                Received: @DateTime.Now.ToShortDateString()
+            </FluentLabel>
+            <FluentBadge Appearance="Appearance.Accent">Priority</FluentBadge>
+        </FluentStack>
+    </FluentStack>
+</FluentCard>
+
+@code {
+    [Parameter] public EmailInsightDto? Email { get; set; }
+}

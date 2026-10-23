@@ -1,0 +1,213 @@
+﻿@page "/knowledge-page"
+
+
+@rendermode InteractiveServer
+
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceUI.UIServices.Workspace
+@using System.Text.RegularExpressions
+
+@inject NavigationManager NavManager
+@inject KnowledgeUIService KBService
+@inject WorkspaceState WState
+@inject Radzen.NotificationService Notifications
+
+<div class="kb-page-container">
+
+    @* 1. HEADER SECTION *@
+    <div class="kb-header">
+        <h1 class="kb-title">Knowledge Base</h1>
+        <FluentButton Appearance="Appearance.Accent" class="kb-new-btn" OnClick="@CreateArticle">New Article</FluentButton>
+    </div>
+
+    @* 2. FILTER BAR *@
+    <div class="kb-filter-bar">
+        <div class="search-wrapper">
+            <FluentSearch Placeholder="Search Sage X3 Articles..."
+                          @bind-Value="SearchQuery"
+                          @bind:event="oninput"
+                          class="full-width" />
+        </div>
+
+        <FluentSelect Items="@Categories.Select(c => c.Name)" @bind-Value="SelectedCategory" Label="Category" />
+        <FluentSelect Items="@(new[] { "Newest", "Most Viewed" })" @bind-Value="SortOrder" Label="Sort By" />
+
+        <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Filter())">Filter</FluentButton>
+    </div>
+
+    @* 3. DATA TABLE *@
+    <div class="kb-table-container">
+        <table class="kb-table">
+            <thead>
+                <tr class="kb-table-header">
+                    <th class="col-check"><FluentCheckbox /></th>
+                    <th>ARTICLE TITLE</th>
+                    <th>CATEGORY</th>
+                    <th class="text-center">VIEWS</th>
+                    <th class="text-right">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var article in FilteredArticles)
+                {
+                    <tr class="kb-row-hover">
+                        <td class="col-check"><FluentCheckbox /></td>
+                        <td class="col-title">
+                            <FluentButton Appearance="Appearance.Lightweight" class="kb-article-link" OnClick="@(() => OpenPreview(article))">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Document())" class="kb-icon-spacing" />
+                                @article.Title
+                            </FluentButton>
+                        </td>
+                        <td class="col-category">@article.Category</td>
+                        <td class="col-views">0</td>
+                        <td class="col-actions">
+                            <FluentButton Appearance="Appearance.Outline" class="btn-preview" OnClick="@(() => OpenPreview(article))">Preview</FluentButton>
+                            <FluentButton Appearance="Appearance.Accent" class="btn-send" OnClick="@(() => OpenEmailForm(article))">Send</FluentButton>
+
+                            <FluentButton Appearance="Appearance.Stealth" OnClick="@(() => DeleteArticle(article))">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Color="Color.Error" />
+                            </FluentButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* 4. MODAL OVERLAY *@
+    @if (SelectedArticle != null)
+    {
+        <div class="modal-backdrop">
+            <div class="modal-container">
+                @if (!IsSuccessMode)
+                {
+                    <div class="modal-header">
+                        <h2>@(IsEmailMode ? "Send Article" : SelectedArticle.Title)</h2>
+                        <FluentButton Appearance="Appearance.Stealth" OnClick="@CloseModal" Disabled="IsSending">
+                            <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
+                        </FluentButton>
+                    </div>
+                    <hr class="modal-divider" />
+
+                    @if (IsEmailMode)
+                    {
+                        <div class="email-form-box">
+                            <FluentTextField @bind-Value="RecipientEmail" Placeholder="recipient@company.com" Label="Recipient Email" class="full-width" @oninput="@(e => RecipientEmail = e.Value?.ToString() ?? "")" />
+                            @if (!string.IsNullOrEmpty(RecipientEmail) && !IsEmailValid)
+                            {
+                                <span class="validation-error">Invalid email format.</span>
+                            }
+                            <div class="modal-footer">
+                                <FluentButton Appearance="Appearance.Stealth" OnClick="@CloseModal" Disabled="IsSending">Cancel</FluentButton>
+                                <FluentButton Appearance="Appearance.Accent" class="btn-send-confirm" OnClick="@SendAsAttachment" Disabled="@(!IsEmailValid || IsSending)">
+                                    @(IsSending ? "Sending..." : "Confirm Send")
+                                </FluentButton>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="preview-content">
+                            <p>@SelectedArticle.Content</p>
+                        </div>
+                        <div class="modal-footer">
+                            <FluentButton Appearance="Appearance.Accent" OnClick="@CloseModal">Close</FluentButton>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="success-state">
+                        <FluentIcon Value="@(new Icons.Filled.Size32.CheckmarkCircle())" Color="Color.Success" class="success-icon" />
+                        <h2 class="success-title">Sent!</h2>
+                        <p>Dashboard updated successfully.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* 5. FOOTER *@
+    <div class="kb-footer">
+        <FluentAnchor Appearance="Appearance.Stealth" Href="https://your-sage-x3-url.com" Target="_blank" class="sage-link">
+            Browse Sage X3 →
+        </FluentAnchor>
+
+        <div class="pagination-container">
+            <span>1 of 1</span>
+            <div class="pagination-btns">
+                <FluentButton Appearance="Appearance.Stealth">Prev</FluentButton>
+                <FluentButton Appearance="Appearance.Stealth">Next</FluentButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    //private string _activeTab = "active";//
+    private KnowledgeDto? SelectedArticle;
+    private bool IsEmailMode, IsSuccessMode, IsSending;
+    private string RecipientEmail = "", SearchQuery = "", SelectedCategory = "All Categories", SortOrder = "Newest";
+
+    private void OpenPreview(KnowledgeDto article) { SelectedArticle = article; IsEmailMode = false; }
+    private void OpenEmailForm(KnowledgeDto article) { SelectedArticle = article; IsEmailMode = true; }
+    private void CloseModal() { SelectedArticle = null; IsEmailMode = false; IsSuccessMode = false; IsSending = false; RecipientEmail = ""; }
+    private void CreateArticle() => NavManager.NavigateTo("/forms/send-knowledge");
+
+    private async Task SendAsAttachment()
+    {
+        if (SelectedArticle == null) return;
+        WState.SetSendingKnowledge(true);
+        IsSending = true;
+
+        try
+        {
+            await Task.Delay(1500);
+            await KBService.SendKnowledgeAsync(new SendKnowledgeModel
+            {
+                SearchQuery = SelectedArticle.Title,
+                Message = RecipientEmail
+            });
+
+            IsSuccessMode = true;
+            IsSending = false;
+            StateHasChanged();
+
+            await Task.Delay(2000);
+            CloseModal();
+        }
+        finally
+        {
+            WState.SetSendingKnowledge(false);
+        }
+    }
+
+    private void DeleteArticle(KnowledgeDto article)
+    {
+        WState.KnowledgeBase.Remove(article);
+        WState.LogActivity(article.Title, "Deleted Article", "Tia");
+        Notifications.Notify(new Radzen.NotificationMessage
+        {
+            Severity = Radzen.NotificationSeverity.Info,
+            Summary = "Deleted",
+            Detail = "Article removed from global state."
+        });
+        WState.Notify();
+    }
+
+    private bool IsEmailValid => Regex.IsMatch(RecipientEmail ?? "", @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+
+    private List<CategoryItem> Categories = new() {
+        new("All Categories"), new("Pricing Guidelines"), new("Product Documentation"),
+        new("Case Studies"), new("FAQ"), new("How To Guides")
+    };
+
+    private IEnumerable<KnowledgeDto> FilteredArticles => WState.KnowledgeBase
+        .Where(a => (SelectedCategory == "All Categories" || a.Category == SelectedCategory) &&
+                    (string.IsNullOrWhiteSpace(SearchQuery) || a.Title.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)));
+
+    public record CategoryItem(string Name);
+}

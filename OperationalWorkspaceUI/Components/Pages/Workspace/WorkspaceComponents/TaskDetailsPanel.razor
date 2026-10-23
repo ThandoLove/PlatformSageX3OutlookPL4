@@ -1,0 +1,241 @@
+﻿@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceUI.UIServices.Workspace
+@using OperationalWorkspaceUI.State
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OperationalWorkspaceUI.UIServices.ToastUIService
+@inject IToastUIService ToastService
+@inject TasksUIService TasksUIService
+@inject WorkspaceState State
+@inject DashboardState AdminState
+@inject IJSRuntime JS
+
+<div class="sidebar-root">
+    <div class="sidebar-header-main" @onclick="ToggleSidebar">
+        <span>Task Details</span>
+        <i class="@($"oi {(IsCollapsed ? "oi-chevron-bottom" : "oi-chevron-top")} chev-icon")"></i>
+    </div>
+
+    @if (!IsCollapsed && Task != null)
+    {
+        <div class="sidebar-content animate-fade-in">
+
+            @if (AdminState.IsAdminEnvironment)
+            {
+                <div class="header-flex">
+                    <div class="alert-icon-red">!</div>
+                    <div class="header-titles">
+                        <h3 class="header-title">@Task.Title</h3>
+                        <p class="header-subtitle">@Task.CompanyName</p>
+                    </div>
+                </div>
+
+                <div class="side-card meta-info-table">
+                    <div class="meta-row"><label>Status</label><span>@Task.Status</span></div>
+                    <div class="meta-row"><label>Priority</label><span class="txt-urgent">@Task.Priority</span></div>
+                    <div class="meta-row"><label>SLA Remaining</label><span class="txt-urgent">Overdue by 5h 20m</span></div>
+                    <div class="meta-row">
+                        <label>Assigned To</label>
+                        <div class="assigned-to">
+                            <span class="assigned-initials">AP</span>
+                            @Task.AssignedTo
+                        </div>
+                    </div>
+                    <div class="meta-row"><label>Created</label><span>@Task.CreatedDate.ToString("MMM d, yyyy h:mm tt")</span></div>
+                    <div class="meta-row"><label>Source</label><span><i class="oi oi-envelope-closed"></i> Outlook Email</span></div>
+                </div>
+
+                <div class="details-section">
+                    <label class="group-label">CUSTOMER</label>
+                    <div class="customer-sage-box">
+                        <span class="customer-name">@Task.CompanyName</span>
+                        <a href="#" class="sage-open">Open in Sage X3 <i class="oi oi-external-link"></i></a>
+                    </div>
+                </div>
+
+                <div class="details-section sage-links-section">
+                    <label class="group-label">SAGE X3 LINKS</label>
+                    <div class="sage-links-grid">
+                        <div class="sage-link-row"><i class="oi oi-person"></i> Customer: @Task.CompanyName <i class="oi oi-external-link"></i></div>
+                        <div class="sage-link-row"><i class="oi oi-document"></i> Invoice: INV-100123 <i class="oi oi-external-link"></i></div>
+                        <div class="sage-link-row"><i class="oi oi-cart"></i> Sales Order: SO-10293 <i class="oi oi-external-link"></i></div>
+                        <div class="sage-link-row"><i class="oi oi-graph"></i> Opportunity: OP-00921 <i class="oi oi-external-link"></i></div>
+                    </div>
+                </div>
+
+                <div class="details-section admin-actions-section">
+                    <label class="group-label">ADMIN ACTIONS</label>
+                    <div class="admin-action-btns">
+                        <button class="a-btn"><i class="oi oi-person"></i> Reassign Task</button>
+                        <button class="a-btn"><i class="oi oi-arrow-top"></i> Change Priority</button>
+                        <button class="a-btn red-border"><i class="oi oi-shield"></i> Escalate Task</button>
+                        <button class="a-btn blue-txt"><i class="oi oi-briefcase"></i> Convert to Case</button>
+                        <button class="a-btn blue-txt"><i class="oi oi-cart"></i> Convert to Sales Order</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="side-card aging-card">
+                    <div class="card-label">TASK AGING</div>
+                    <div class="aging-grid">
+                        <div class="stat-unit">
+                            <span class="stat-num red-txt">
+                                @State.Tasks.Count(t => t.Priority == OperationalWorkspace.Domain.Enums.TaskPriority.Urgent && t.Status != OperationalWorkspace.Domain.Enums.TaskStatus.Completed)
+                            </span>
+                            <span class="stat-lbl">OVERDUE</span>
+                        </div>
+                        <div class="stat-unit">
+                            <span class="stat-num blue-txt">
+                                @State.Tasks.Count(t => t.Priority == OperationalWorkspace.Domain.Enums.TaskPriority.High && t.Status != OperationalWorkspace.Domain.Enums.TaskStatus.Completed)
+                            </span>
+                            <span class="stat-lbl">DUE SOON</span>
+                        </div>
+                        <div class="ring-unit">
+                            @{
+                                var total = State.Tasks.Count;
+                                var completed = State.Tasks.Count(t => t.Status == OperationalWorkspace.Domain.Enums.TaskStatus.Completed);
+                                var percent = total > 0 ? (completed * 100) / total : 100;
+                            }
+                            <div class="green-ring-pretty">@(percent)%</div>
+                        </div>
+                    </div>
+                    <div class="histo-divider">HISTORICAL TREND</div>
+                    <div class="histogram-viewport">
+                        <canvas id="agingHistogramCanvas"></canvas>
+                    </div>
+                </div>
+                <div class="side-card response-row">
+                    <div class="timer-red-ring-seamless">2.3h</div>
+                    <div class="response-text">
+                        <span class="lbl-bold">Avg. Response Time</span>
+                        <div class="spark-box">
+                            @for (int i = 0; i < 6; i++)
+                            {
+                                <div class="spark-bar-seamless" style="height: @(6 + (i * 3))px;"></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="side-card delegation-box">
+                    <div class="card-label">DELEGATE TO TEAM MEMBER</div>
+                    <FluentSelect TOption="TeamMember" Items="@TeamMembers" OptionText="@(i => i.Name)"
+                                  @bind-SelectedOption="@SelectedMember" Placeholder="Select a colleague..."
+                                  Class="select-full" />
+                    <button class="btn-blue-delegate-seamless" @onclick="HandleDelegate" disabled="@(SelectedMember == null)">
+                        <span>Confirm Delegation</span>
+                        <i class="oi oi-person"></i>
+                    </button>
+                </div>
+            }
+
+            <div class="workload-stats-seamless">
+                <div class="task-count">@State.Tasks.Count(t => t.Status != OperationalWorkspace.Domain.Enums.TaskStatus.Completed) Active Tasks</div>
+                <div class="icon-row-seamless">
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <i class="oi oi-person blue-p-icon"></i>
+                    }
+                    <i class="oi oi-person grey-p-icon"></i>
+                </div>
+                <div class="footer-msg-seamless"><i class="oi oi-info"></i> System Workload</div>
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="task-details-empty-state">
+            <p>Select a task row layout from the grid list to view complete dynamic insights.</p>
+        </div>
+    }
+</div>
+@code {
+    [Parameter] public TaskDto? Task { get; set; }
+    private bool IsCollapsed = false;
+    private TeamMember? SelectedMember;
+
+    private List<TeamMember> TeamMembers = new()
+    {
+        new("Sarah Jenkins", "sarah.j@company.com"),
+        new("Mark Stevens", "mark.s@company.com"),
+        new("Tia Roberts", "tia.r@company.com"),
+        new("System Admin", "admin@company.com")
+    };
+
+    private void ToggleSidebar() => IsCollapsed = !IsCollapsed;
+
+    private async Task HandleDelegate()
+    {
+        if (Task != null && SelectedMember != null)
+        {
+            await InvokeAsync(async () =>
+            {
+                State.SetLoadingTasks(true);
+                StateHasChanged();
+            });
+
+            try
+            {
+                await TasksUIService.DelegateTaskAsync(Task.Id, SelectedMember.Email);
+
+                var masterTask = State.Tasks.FirstOrDefault(t => t.Id == Task.Id);
+                if (masterTask != null)
+                {
+                    masterTask.AssignedTo = SelectedMember.Email;
+                    masterTask.UpdatedDate = DateTime.Now;
+                }
+
+                var delegatedUserName = SelectedMember.Name;
+
+                State.LogActivity(
+                    Task.Title,
+                    $"Delegated to {delegatedUserName}",
+                    "Alex Turner"
+                );
+
+                SelectedMember = null;
+
+                State.Notify();
+
+                ToastService.ShowSuccess(
+                    $"Task delegated to {delegatedUserName}."
+                );
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError($"Delegation failed: {ex.Message}");
+
+                Console.WriteLine(
+                $"Delegation process threw an exception: {ex.Message}"
+                );
+            }
+            finally
+            {
+                await InvokeAsync(() =>
+                {
+                    State.SetLoadingTasks(false);
+                    StateHasChanged();
+                });
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Task != null && !IsCollapsed && !AdminState.IsAdminEnvironment)
+        {
+            try
+            {
+                var overdue = State.Tasks.Count(t => t.Priority == OperationalWorkspace.Domain.Enums.TaskPriority.Urgent && t.Status != OperationalWorkspace.Domain.Enums.TaskStatus.Completed);
+                var dueSoon = State.Tasks.Count(t => t.Priority == OperationalWorkspace.Domain.Enums.TaskPriority.High && t.Status != OperationalWorkspace.Domain.Enums.TaskStatus.Completed);
+
+                await JS.InvokeVoidAsync("renderAgingHistogram", "agingHistogramCanvas", new[] { overdue, dueSoon, 0, 3 });
+            }
+            catch (JSDisconnectedException) { }
+            catch (Exception) { }
+        }
+    }
+
+    public record TeamMember(string Name, string Email);
+}

@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PERSISTING ALL ORIGINAL INFRASTRUCTURE PACKAGES INTACT -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Polly" Version="8.8.0" />
+    <PackageReference Include="FluentValidation" Version="12.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <!-- 🚀 ADDED: THIS UNLOCKS MICROSOFT.ASPNETCORE.HTTP & IHTTPCONTEXTACCESSOR FOR INFRASTRUCTURE -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OperationalWorkspace.Domain\OperationalWorkspace.Domain.csproj" />
+    <ProjectReference Include="..\OperationalWorkspaceApplication\OperationalWorkspaceApplication.csproj" />
+	  <ProjectReference Include="..\SharedProject\OperationalWorkspaceShared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Persistence\Multitenancy\" />
+  </ItemGroup>
+
+</Project>

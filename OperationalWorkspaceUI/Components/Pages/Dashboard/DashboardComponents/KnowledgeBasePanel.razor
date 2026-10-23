@@ -1,0 +1,129 @@
+﻿@using OperationalWorkspaceUI.State
+@using OperationalWorkspaceApplication.DTOs
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@implements IDisposable
+@inject WorkspaceState WState
+@inject NavigationManager NavManager
+@inject IJSRuntime JS 
+
+@* Added to handle opening document links *@
+
+<FluentCard Class="kb-widget-card">
+    
+    @* --- LIVE OVERLAY --- *@
+    @if (WState.IsSendingKnowledge)
+    {
+        <div class="kb-overlay">
+            <FluentProgressRing Class="kb-overlay-ring" />
+            <span class="kb-overlay-text">Sending Article...</span>
+        </div>
+    }
+
+    @* Panel Header *@
+    <div class="panel-header">
+        <h3>Knowledge Base</h3>
+        <FluentIcon Value="@(new Icons.Regular.Size16.ChevronUp())" Color="@Color.Neutral" />
+    </div>
+
+    @* Search Bar *@
+    <div class="kb-search-container">
+        <FluentSearch Placeholder="Search articles..."
+                      Class="kb-search"
+                      @bind-Value="@_searchQuery"
+                      @bind-Value:event="oninput" />
+    </div>
+
+    @* Resource Links *@
+    <div class="kb-links-container">
+        @if (FilteredArticles != null && FilteredArticles.Any())
+        {
+            @foreach (var kb in FilteredArticles.OrderByDescending(k => k.Title).Take(2))
+            {
+                <div class="kb-link-wrapper" @onclick="() => OpenDocument(kb)">
+                    <div class="kb-link-item">
+                        <FluentIcon Value="@GetIcon(kb.Title)" Color="@GetIconColor(kb.Title)" />
+                        <div class="kb-text-group">
+                            <div class="kb-title">@kb.Title</div>
+                            <div class="kb-meta">@kb.Category</div>
+                        </div>
+                        <FluentIcon Value="@(new Icons.Regular.Size16.ArrowRight())" Color="@Color.Accent" />
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="kb-empty">
+                <p>No matching articles found.</p>
+            </div>
+        }
+    </div>
+
+    @* Footer Button: Keep this for the Main Page *@
+    <div class="kb-footer">
+        <FluentButton Appearance="Appearance.Lightweight" Class="footer-btn" OnClick="@NavigateToKB">
+            Open Full Knowledge Base
+        </FluentButton>
+    </div>
+</FluentCard>
+
+@code {
+    [Parameter] public List<KnowledgeDto>? Data { get; set; }
+    private string? _searchQuery = "";
+
+    protected override void OnInitialized()
+    {
+        WState.OnChange += HandleStateChanged;
+
+        if (WState.KnowledgeBase == null || !WState.KnowledgeBase.Any())
+        {
+            WState.KnowledgeBase = new List<KnowledgeDto>
+            {
+                // Note: The 5th parameter is the URL to the document itself
+                new KnowledgeDto(Guid.NewGuid(), "Pricing Guidelines 2024", "Content", "Pricing", "https://your-docs.com", "Sales"),
+                new KnowledgeDto(Guid.NewGuid(), "Product Installation Guide", "Content", "Docs", "https://your-docs.com", "IT"),
+                new KnowledgeDto(Guid.NewGuid(), "Sage X3 FAQ", "Content", "FAQ", "https://your-docs.com", "Support")
+            };
+        }
+    }
+
+    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
+
+    @* NEW: Logic to open the specific document link *@
+    private async Task OpenDocument(KnowledgeDto article)
+    {
+        if (!string.IsNullOrEmpty(article.Url) && article.Url != "#")
+        {
+            await JS.InvokeVoidAsync("open", article.Url, "_blank");
+        }
+        else
+        {
+            // Fallback: If no URL is provided, show a toast or preview
+            Console.WriteLine("No URL defined for this document.");
+        }
+    }
+
+    private IEnumerable<KnowledgeDto> FilteredArticles =>
+        string.IsNullOrWhiteSpace(_searchQuery)
+            ? WState.KnowledgeBase
+            : WState.KnowledgeBase.Where(a => a.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+
+    private Icon GetIcon(string title) => title.ToLower() switch
+    {
+        var t when t.Contains("pricing") => new Icons.Filled.Size20.Table(),
+        var t when t.Contains("faq") => new Icons.Filled.Size20.Chat(),
+        _ => new Icons.Filled.Size20.Document()
+    };
+
+    private Color GetIconColor(string title) => title.ToLower() switch
+    {
+        var t when t.Contains("pricing") => Color.Success,
+        _ => Color.Neutral
+    };
+
+    public void Dispose() => WState.OnChange -= HandleStateChanged;
+    private void NavigateToKB() => NavManager.NavigateTo("/knowledge-page");
+}

@@ -1,0 +1,438 @@
+@page "/taskpane"
+@page "/taskpane/{**path}"
+@layout TaskPaneLayout
+
+@using Microsoft.AspNetCore.Components
+
+@using OperationalWorkspaceUI.Components.Pages.Dashboard
+@using OperationalWorkspaceApplication.ApplicationState
+@using OperationalWorkspaceUI.Components.Pages.Forms
+@using OperationalWorkspaceUI.Components.Pages.TaskPane
+@using OperationalWorkspaceUI.Components.Pages.Workspace.WorkspaceComponents
+
+@implements IDisposable
+
+@inject AppStateContainer AppState
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<!--
+    TASK PANE ROUTING FLOW
+
+    /taskpane
+        ↓
+    Not authenticated
+        ↓
+    Home.razor
+
+    Home → Sign In
+        ↓
+    LoginForm modal
+
+    Successful login
+        ↓
+    /taskpane/workspace
+        ↓
+    Dashboard
+-->
+
+<div class="taskpane-embedded-wrapper outlook-taskpane-context">
+
+    @if (!AppState.IsAuthenticated)
+    {
+        <!--
+            OUTLOOK ENTRY PAGE
+
+            /taskpane
+
+            The Home component is rendered directly here.
+            Home.razor should NOT also own the /taskpane route.
+        -->
+        <Home />
+    }
+    else if (_componentType != null)
+    {
+        <!--
+            AUTHENTICATED TASK PANE CONTENT
+
+            Examples:
+
+            /taskpane/workspace
+            /taskpane/contact
+            /taskpane/compose/template
+            /taskpane/compose/attach-documents
+            /taskpane/compose/followup
+            /taskpane/task
+            /taskpane/customer
+            /taskpane/orders
+            /taskpane/ai
+        -->
+        <div class="taskpane-fluid-content-container">
+            <DynamicComponent Type="_componentType"
+                              Parameters="_parameters" />
+        </div>
+    }
+    else
+    {
+        <!--
+            AUTHENTICATED FALLBACK
+
+            This appears if the requested route does not map
+            to one of the known task pane components.
+        -->
+        <div class="taskpane-fallback">
+
+            <h4>
+                Page Not Found
+            </h4>
+
+            <p>
+                Active path: @_requestedPath
+            </p>
+
+            <button class="taskpane-fallback-btn"
+                    @onclick="FallbackToDashboard">
+
+                Go to Dashboard
+
+            </button>
+
+        </div>
+    }
+
+</div>
+
+<!-- 
+    =========================================================================
+    OUTLOOK TASKPANE ISOLATION BRIDGE (CSS)
+    Forces the multi-column browser grids to fold flat into a single column 
+    =========================================================================
+-->
+<style>
+    .taskpane-embedded-wrapper.outlook-taskpane-context {
+        width: 100% !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        background: #ffffff !important;
+        padding: 12px !important;
+        box-sizing: border-box !important;
+    }
+
+    .outlook-taskpane-context div, 
+    .outlook-taskpane-context main, 
+    .outlook-taskpane-context section {
+        box-sizing: border-box !important;
+    }
+
+    /* Targeted taskpane adjustments: only affect dashboard/workspace layout elements
+       Avoid blanket changes that break topbar/sidebar or other pages. */
+    .outlook-taskpane-context .dashboard-wrapper,
+    .outlook-taskpane-context .workspace-viewport,
+    .outlook-taskpane-context .metrics-grid,
+    .outlook-taskpane-context .sage-dashboard-row {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Force massive desktop widgets to sit flat within narrow boundaries */
+    .outlook-taskpane-context [class*="card"],
+    .outlook-taskpane-context [class*="widget"],
+    .outlook-taskpane-context [class*="pane"],
+    .outlook-taskpane-context [class*="panel"],
+    .outlook-taskpane-context [class*="snapshot"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+    }
+
+    /* Permit tiny sub-grids (like 2-column action buttons) where screen space allows */
+    .outlook-taskpane-context [class*="action-buttons"],
+    .outlook-taskpane-context [class*="metrics"] {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+        gap: 8px !important;
+    }
+
+    /* Structured formatting for fallback UI components */
+    .taskpane-fallback {
+        text-align: center;
+        padding-top: 40px;
+        color: #605e5c;
+        font-family: sans-serif;
+    }
+    .taskpane-fallback h4 {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    .taskpane-fallback p {
+        font-size: 11px;
+        margin-bottom: 12px;
+    }
+    .taskpane-fallback-btn {
+        background: #0078d4;
+        color: #ffffff;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+    }
+</style>
+
+@code {
+
+    /*
+        Captures everything after /taskpane/
+
+        Examples:
+
+        /taskpane
+            path = null or ""
+
+        /taskpane/workspace
+            path = "workspace"
+
+        /taskpane/contact
+            path = "contact"
+
+        /taskpane/compose/attach-documents
+            path = "compose/attach-documents"
+    */
+
+    [Parameter]
+    public string? path { get; set; }
+
+    private string _requestedPath = string.Empty;
+
+    private Type? _componentType;
+
+    private Dictionary<string, object>? _parameters;
+
+    /*
+        Subscribe to authentication changes.
+
+        When AppState changes after login, this component
+        recalculates the route mapping and refreshes.
+    */
+
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += HandleSecurityStateChange;
+    }
+
+    /*
+        Enforce environmental mapping restrictions directly after rendering.
+        If it finds a browser context lacking Office bindings, it safely returns
+        the view engine execution pipeline back to the main dashboard.
+    */
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var environment = await JS.InvokeAsync<string>("window.checkOfficeEnvironment");
+                
+                // If running in a raw browser page without Outlook integration, force fallback to standard browser Dashboard view
+                if (environment == "Browser" && _requestedPath == "workspace")
+                {
+                    Nav.NavigateTo("/dashboard", forceLoad: false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Environment verification failure: {ex.Message}");
+            }
+        }
+    }
+
+    /*
+        Runs whenever the route parameter changes.
+    */
+
+    protected override void OnParametersSet()
+    {
+        _requestedPath = (path ?? string.Empty)
+            .Trim('/')
+            .ToLowerInvariant();
+
+        MapPathToComponent(_requestedPath);
+    }
+
+
+    /*
+        Maps the Outlook task pane URL to the actual component.
+
+        IMPORTANT:
+
+        /taskpane
+            DOES NOT map to Dashboard.
+
+        The base route is the landing page.
+
+        /taskpane/workspace
+            maps to Dashboard.
+    */
+
+    private void MapPathToComponent(string p)
+    {
+        /*
+            BASE TASK PANE ROUTE
+
+            /taskpane
+
+            Home is rendered by the main Razor markup
+            while the user is unauthenticated.
+
+            Therefore we do not assign Dashboard here.
+        */
+
+        if (string.IsNullOrWhiteSpace(p))
+        {
+            _componentType = null;
+        }
+
+
+        /*
+            DASHBOARD
+
+            /taskpane/workspace
+        */
+
+        else if (p == "workspace")
+        {
+            _componentType = typeof(Dashboard);
+        }
+
+
+        /*
+            CONTACTS
+
+            Examples:
+
+            /taskpane/contact
+            /taskpane/contacts
+        */
+
+        else if (p.StartsWith("contact"))
+        {
+            _componentType = typeof(NewContactForm);
+        }
+
+
+        /*
+            COMPOSE COMMANDS
+
+            Examples:
+
+            /taskpane/compose/template
+            /taskpane/compose/attach-documents
+            /taskpane/compose/followup
+        */
+
+        else if (p.StartsWith("compose"))
+        {
+            if (p.Contains("attach-documents"))
+            {
+                _componentType = typeof(Attachments);
+            }
+            else if (p.Contains("followup"))
+            {
+                _componentType = typeof(Activity);
+            }
+            else
+            {
+                _componentType = typeof(ComposePage);
+            }
+        }
+
+
+        /*
+            TASKS
+
+            /taskpane/task
+            /taskpane/tasks
+        */
+
+        else if (p.StartsWith("task"))
+        {
+            _componentType = typeof(Tasks);
+        }
+
+
+        /*
+            CUSTOMER / BUSINESS PARTNER
+
+            /taskpane/customer
+        */
+
+        else if (p.StartsWith("customer"))
+        {
+            _componentType = typeof(BusinessPartner);
+        }
+
+
+        /*
+            ORDERS
+
+            /taskpane/orders
+        */
+
+        else if (p.StartsWith("orders"))
+        {
+            _componentType = typeof(Orders);
+        }
+
+
+        /*
+            AI SUMMARY
+
+            /taskpane/ai
+        */
+
+        else if (p.StartsWith("ai"))
+        {
+            _componentType = typeof(AISummary);
+        }
+
+
+        /*
+            UNKNOWN ROUTE
+        */
+
+        else
+        {
+            _componentType = null;
+        }
+
+
+        /*
+            DynamicComponent parameters.
+
+            Currently your mapped components do not require
+            route parameters, so this remains empty.
+        */
+
+        _parameters = _componentType != null
+            ? new Dictionary<string, object>()
+            : null;
+    }
+
+
+    /*Safety fallback.If an authenticated user lands on an unknown task paneroute, return them to the dashboard.*/
+
+    private void FallbackToDashboard() 
+    { Nav.NavigateTo("/taskpane/workspace", forceLoad: false);
+    }
+     
+    /*Called whenever AppState changes.Most importantly:Login successful↓AppState.IsAuthenticated = true↓Component refreshes*/
+    private void HandleSecurityStateChange() 
+    { InvokeAsync(() => { MapPathToComponent(_requestedPath); StateHasChanged(); }); 
+    }/*Cleanup.*/
+    public void Dispose() { AppState.OnChange -= HandleSecurityStateChange; }
+}

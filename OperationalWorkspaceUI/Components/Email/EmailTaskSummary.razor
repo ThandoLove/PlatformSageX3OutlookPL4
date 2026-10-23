@@ -1,0 +1,62 @@
+﻿@using OperationalWorkspaceApplication.DTOs
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@if (Tasks == null || !Tasks.Any())
+{
+    <div style="padding: 20px; text-align: center; color: #605e5c;">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardTask())" Color="Color.Disabled" />
+        <p>No related tasks found.</p>
+    </div>
+}
+else
+{
+    <div class="email-tasks" style="padding-top: 10px;">
+        <FluentLabel Typo="Typography.Body" Style="font-weight: bold; margin-bottom: 8px;">
+            RELATED TASKS
+        </FluentLabel>
+
+        <div style="border: 1px solid #edebe9; border-radius: 4px;">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+
+                <thead style="background-color: #f3f2f1; text-align: left;">
+                    <tr style="font-size: 0.75rem; color: #605e5c;">
+                        <th style="padding: 8px;">TITLE</th>
+                        <th style="padding: 8px;">STATUS</th>
+                        <th style="padding: 8px;">DUE</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var task in Tasks)
+                    {
+                        <tr @onclick="() => OnOpenTask.InvokeAsync(task)"
+                            style="cursor: pointer; border-top: 1px solid #edebe9; font-size: 0.85rem;">
+
+                            <td style="padding: 8px;">@task.Title</td>
+
+                            <td style="padding: 8px;">
+                                <FluentBadge Appearance="Appearance.Neutral">
+                                    @(task.Completed ? "Completed" : "Active")
+                                </FluentBadge>
+                            </td>
+
+                            <td style="padding: 8px;">
+                                @(task.DueDate.HasValue
+                                    ? task.DueDate.Value.ToString("yyyy-MM-dd")
+                                    : "-")
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<TaskDto>? Tasks { get; set; }
+    [Parameter] public EventCallback<TaskDto> OnOpenTask { get; set; }
+}

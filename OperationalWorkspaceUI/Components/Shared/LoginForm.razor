@@ -1,0 +1,674 @@
+﻿@page "/taskpane/login"
+
+@using OperationalWorkspaceApplication.DTOs
+@using OperationalWorkspaceUI.Security
+@using System.Net.Http.Json
+
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+
+<div class="sage-login-card-container">
+
+
+
+    <!-- IDENTITY ICON -->
+    <div class="login-identity-shield-ring">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke-width="1.8"
+             stroke="#1d4ed8">
+
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+
+        </svg>
+    </div>
+
+
+    <!-- TITLE -->
+    <h2 class="login-brand-main-title">
+        Sign In to Sage X3
+    </h2>
+
+    <p class="login-brand-sub-description">
+        Access your contextual workspace
+    </p>
+
+
+    <!-- LOGIN FORM -->
+    <EditForm Model="loginModel"
+              OnValidSubmit="HandleLogin">
+
+        <DataAnnotationsValidator />
+
+
+        <!-- USERNAME -->
+        <div class="modern-input-field-stack">
+            <label class="modern-field-tag-label">Username</label>
+
+            <div class="modern-field-input-box-wrapper">
+                <svg class="modern-field-inline-vector-icon"
+                     xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.7"
+                     stroke="currentColor">
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15.75 6a3.75 3.75 0 1 1-7.5 0
+                    3.75 3.75 0 0 1 7.5 0ZM4.501
+                    20.118a7.5 7.5 0 0 1 14.998 0
+                    A17.933 17.933 0 0 1 12 21.75
+                    c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+
+                <InputText @bind-Value="loginModel.Username"
+                           placeholder="Enter your username"
+                           disabled="@isBusy"
+                           class="modern-native-text-input" />
+            </div>
+
+            <ValidationMessage For="@(() => loginModel.Username)" />
+        </div>
+
+
+        <!-- PASSWORD -->
+        <div class="modern-input-field-stack">
+
+            <label class="modern-field-tag-label">
+                Password
+            </label>
+
+            <div class="modern-field-input-box-wrapper">
+
+                <!-- PASSWORD ICON -->
+                <svg class="modern-field-inline-vector-icon"
+                     xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.8"
+                     stroke="currentColor"
+                     aria-hidden="true">
+
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M16.5 10.5V6.75
+                    a4.5 4.5 0 1 0-9 0v3.75
+                    m-.75 11.25h10.5
+                    a2.25 2.25 0 0 0 2.25-2.25
+                    v-6.75
+                    a2.25 2.25 0 0 0-2.25-2.25
+                    H6.75
+                    a2.25 2.25 0 0 0-2.25 2.25
+                    v6.75
+                    a2.25 2.25 0 0 0 2.25 2.25Z" />
+
+                </svg>
+
+
+                <!-- PASSWORD INPUT -->
+                <InputText @bind-Value="loginModel.Password"
+                           type="@PasswordInputType"
+                           placeholder="Enter your password"
+                           disabled="@isBusy"
+                           class="modern-native-text-input" />
+
+
+                <!-- SHOW / HIDE PASSWORD -->
+                <button type="button"
+                        class="modern-field-password-eye-toggle-btn"
+                        @onclick="TogglePassword"
+                        disabled="@isBusy"
+                        aria-label="@(ShowPassword ? "Hide password" : "Show password")">
+
+                    @if (ShowPassword)
+                    {
+                        <!-- HIDE PASSWORD / EYE SLASH -->
+
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.8"
+                             stroke="currentColor"
+                             aria-hidden="true">
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M3 3l18 18" />
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M10.584 10.587
+                            a2.25 2.25 0 0 0 3.183 3.183" />
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M9.88 4.24
+                            A9.72 9.72 0 0 1 12 4.5
+                            c4.638 0 8.573 3.007
+                            9.963 7.178
+                            a1.012 1.012 0 0 1 0 .639
+                            c-.358 1.074-.87 2.07-1.5 2.95" />
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M6.228 6.228
+                            C4.383 7.47 3.007 9.315
+                            2.036 11.683
+                            a1.012 1.012 0 0 0 0 .639
+                            C3.423 16.49 7.36 19.5
+                            12 19.5
+                            a9.76 9.76 0 0 0 3.836-.78" />
+
+                        </svg>
+                    }
+                    else
+                    {
+                        <!-- SHOW PASSWORD / NORMAL EYE -->
+
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.8"
+                             stroke="currentColor"
+                             aria-hidden="true">
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M2.036 12.322
+                            a1.012 1.012 0 0 1 0-.639
+                            C3.423 7.51 7.36 4.5
+                            12 4.5
+                            c4.638 0 8.573 3.007
+                            9.963 7.178
+                            .07.207.07.431 0 .639
+                            C20.577 16.49 16.64 19.5
+                            12 19.5
+                            c-4.638 0-8.573-3.007
+                            -9.963-7.178Z" />
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M15 12
+                            a3 3 0 1 1-6 0
+                            3 3 0 0 1 6 0Z" />
+
+                        </svg>
+                    }
+
+                </button>
+
+            </div>
+
+            <ValidationMessage For="@(() => loginModel.Password)" />
+
+        </div>
+
+
+        <!-- REMEMBER / FORGOT PASSWORD -->
+        <div class="modern-login-options-row">
+
+            <label class="modern-remember-checkbox-tag">
+
+                <input type="checkbox"
+                       @bind="RememberMe"
+                       disabled="@isBusy"
+                       class="modern-native-checkbox" />
+
+                <span>Remember me</span>
+
+            </label>
+
+
+            <!-- This now has an actual Blazor click event -->
+
+
+            <button type="button"
+                    class="modern-forgot-password-link"
+                    @onclick="HandleForgotPassword"
+                    disabled="@isBusy">
+                Forgot password?
+            </button>
+
+        </div>
+
+
+        <!-- ERROR -->
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="modern-login-error-container-alert">
+                <span>@ErrorMessage</span>
+            </div>
+        }
+
+
+        <!-- SIGN IN -->
+        <button type="submit"
+                class="modern-btn-primary-submit-action"
+                disabled="@isBusy">
+
+            @if (isBusy && !isSsoLoading)
+            {
+                <span class="modern-submit-spinner-element"></span>
+                <span>Authenticating...</span>
+            }
+            else
+            {
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="2"
+                     stroke="currentColor">
+
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15.75 9V5.25
+                    A2.25 2.25 0 0 0 13.5 3h-6
+                    A2.25 2.25 0 0 0 5.25 5.25v13.5
+                    A2.25 2.25 0 0 0 7.5 21h6
+                    A2.25 2.25 0 0 0 15.75 18.75V15
+                    M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+
+                </svg>
+
+                <span>Sign In</span>
+            }
+
+        </button>
+
+
+        <!-- DIVIDER -->
+        <div class="modern-login-content-divider-break">
+            <span>or</span>
+        </div>
+
+
+        <!-- SSO -->
+        <button type="button"
+                class="modern-btn-secondary-sso-handshake @(isSsoLoading ? "sso-active-pulse" : "")"
+                @onclick="InitiateSSOAuthentication"
+                disabled="@isBusy">
+
+            @if (isSsoLoading)
+            {
+                <span class="modern-sso-spinner-element"></span>
+                <span>Connecting to IDP...</span>
+            }
+            else
+            {
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.8"
+                     stroke="currentColor">
+
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M9 12.75 11.25 15 15 9.75
+                    m-3-7.036
+                    A11.959 11.959 0 0 1 3.598 6
+                    A11.99 11.99 0 0 0 3 9.749
+                    c0 5.592 3.824 10.29 9 11.623
+                    5.176-1.332 9-6.03 9-11.622
+                    0-1.31-.21-2.571-.598-3.751
+                    h-.152
+                    c-3.196 0-6.1-1.248
+                    -8.25-3.285Z" />
+
+                </svg>
+
+                <span>Sign in with SSO</span>
+            }
+
+        </button>
+
+    </EditForm>
+
+
+    <!-- HELP FOOTER -->
+    <div class="modern-login-system-help-footer-row">
+
+        <span>
+            Need help?
+
+            <a href="#"
+               class="modern-contact-admin-link"
+               @onclick="HandleContactAdministrator"
+               @onclick:preventDefault="true">
+
+                Contact your administrator
+
+            </a>
+        </span>
+
+    </div>
+
+</div>
+
+
+@code {
+
+    private LoginRequestDto loginModel = new();
+
+    private bool isBusy;
+
+    private bool isSsoLoading;
+
+    private bool RememberMe = true;
+
+    private bool ShowPassword;
+
+    private string? ErrorMessage;
+
+
+    private string PasswordInputType =>
+        ShowPassword ? "text" : "password";
+
+
+    [Parameter]
+    public EventCallback<(string Token, string User, string Email)>
+        OnAuthenticationSuccess
+    { get; set; }
+
+
+    [Inject]
+    private OperationalWorkspaceUI.UIServices.System.AuthService
+        AuthService
+    { get; set; } = default!;
+
+
+    [Inject]
+    private NavigationManager
+        Nav
+    { get; set; } = default!;
+
+
+    [Inject]
+    private OperationalWorkspaceUI.UIServices.System.ModalService
+        ModalService
+    { get; set; } = default!;
+
+
+    [Inject]
+    private Microsoft.AspNetCore.Hosting.IWebHostEnvironment
+        Env
+    { get; set; } = default!;
+
+
+    [Inject]
+    private HttpClient
+        Http
+    { get; set; } = default!;
+
+
+    [Inject]
+    private OperationalWorkspaceUI.State.UIState
+        UIState
+    { get; set; } = default!;
+
+
+    [Inject]
+    private OperationalWorkspaceApplication.ApplicationState.AppStateContainer
+        AppState
+    { get; set; } = default!;
+
+
+    /* PASSWORD SHOW / HIDE */
+
+    private void TogglePassword()
+    {
+        ShowPassword = !ShowPassword;
+    }
+
+
+    /* FORGOT PASSWORD */
+
+    /* FORGOT PASSWORD */
+
+    private Task HandleForgotPassword()
+    {
+        ErrorMessage = null;
+
+        // Sage X3 password-reset logic will be called here.
+
+        return Task.CompletedTask;
+    }
+
+
+    /* CONTACT ADMINISTRATOR */
+
+    private Task HandleContactAdministrator()
+    {
+        ErrorMessage =
+            "Please contact your system administrator for assistance with your Sage X3 account.";
+
+        return Task.CompletedTask;
+    }
+
+
+    /* STANDARD LOGIN */
+
+    private async Task HandleLogin()
+    {
+        if (isBusy)
+            return;
+
+        try
+        {
+            isBusy = true;
+
+            ErrorMessage = null;
+
+            StateHasChanged();
+
+            await Task.Delay(400);
+
+            var success =
+                await AuthService.LoginAsync(loginModel);
+
+            if (!success)
+            {
+                ErrorMessage =
+                    "Authentication rejected by environment security settings.";
+
+                return;
+            }
+
+            if (AuthStateProvider
+                is CustomAuthenticationStateProvider authProvider)
+            {
+                var authState =
+                    await authProvider.GetAuthenticationStateAsync();
+
+                UIState.SynchronizeUserSession(authState.User);
+            }
+
+            string extractionToken =
+                "eyJhbGciOiJIUzI1Ni...";
+
+            string extractionName =
+                loginModel.Username.Contains("@")
+                    ? loginModel.Username.Split('@')[0]
+                    : loginModel.Username;
+
+            string extractionEmail =
+                loginModel.Username;
+
+            AppState.SetAuthentication(
+                extractionToken,
+                extractionName,
+                extractionEmail
+            );
+
+            if (OnAuthenticationSuccess.HasDelegate)
+            {
+                await OnAuthenticationSuccess.InvokeAsync(
+                    (
+                        extractionToken,
+                        extractionName,
+                        extractionEmail
+                    )
+                );
+            }
+            else
+            {
+                await ModalService.CloseModal();
+
+                Nav.NavigateTo(
+                    "/taskpane/workspace",
+                    forceLoad: false
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Authentication failed: {ex.Message}";
+        }
+        finally
+        {
+            isBusy = false;
+
+            StateHasChanged();
+        }
+    }
+
+
+    /* SSO LOGIN */
+
+    private async Task InitiateSSOAuthentication()
+    {
+        if (isBusy)
+            return;
+
+        try
+        {
+            isBusy = true;
+
+            isSsoLoading = true;
+
+            ErrorMessage = null;
+
+            StateHasChanged();
+
+            string targetToken =
+                "sso_bypass_marker";
+
+            string targetUser =
+                "SSO Operator";
+
+            string targetEmail =
+                "sso.operator@test.com";
+
+
+            if (Env.IsDevelopment())
+            {
+                await Task.Delay(1000);
+
+                var ssoMockDto =
+                    new LoginRequestDto
+                    {
+                        Username = targetEmail,
+                        Password = targetToken
+                    };
+
+                await AuthService.LoginAsync(ssoMockDto);
+            }
+            else
+            {
+                var authResult =
+                    await Http.GetFromJsonAsync<LoginResponse>(
+                        "/api/v1/auth/sso/challenge"
+                    );
+
+                if (authResult is null ||
+                    string.IsNullOrWhiteSpace(authResult.Token))
+                {
+                    ErrorMessage =
+                        "Single Sign-On authentication handshake rejected or timed out.";
+
+                    return;
+                }
+
+                targetToken =
+                    authResult.Token;
+
+                targetUser =
+                    "SSO Corporate Node";
+
+                targetEmail =
+                    "sso.production@test.com";
+
+
+                var ssoProdDto =
+                    new LoginRequestDto
+                    {
+                        Username = targetEmail,
+                        Password = targetToken
+                    };
+
+                await AuthService.LoginAsync(ssoProdDto);
+            }
+
+
+            if (AuthStateProvider
+                is CustomAuthenticationStateProvider authProvider)
+            {
+                var authState =
+                    await authProvider.GetAuthenticationStateAsync();
+
+                UIState.SynchronizeUserSession(authState.User);
+            }
+
+
+            AppState.SetAuthentication(
+                targetToken,
+                targetUser,
+                targetEmail
+            );
+
+
+            if (OnAuthenticationSuccess.HasDelegate)
+            {
+                await OnAuthenticationSuccess.InvokeAsync(
+                    (
+                        targetToken,
+                        targetUser,
+                        targetEmail
+                    )
+                );
+            }
+            else
+            {
+                await ModalService.CloseModal();
+
+                Nav.NavigateTo(
+                    "/taskpane/workspace",
+                    forceLoad: false
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Single Sign-On initialization failed: {ex.Message}";
+        }
+        finally
+        {
+            isBusy = false;
+
+            isSsoLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
+
+    public class LoginResponse
+    {
+        public string? Token { get; set; }
+    }
+
+   
+}

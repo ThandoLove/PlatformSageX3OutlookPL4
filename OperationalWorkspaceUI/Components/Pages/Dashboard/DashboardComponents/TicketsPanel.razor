@@ -1,0 +1,75 @@
+﻿
+@using OperationalWorkspaceUI.State
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@implements IDisposable
+@inject WorkspaceState WState
+@inject NavigationManager NavManager
+
+<FluentCard Class="tasks-widget-card">
+
+    @* HEADER *@
+    <div class="panel-header">
+        <div class="panel-title-group">
+            <FluentIcon Value="@(new Icons.Regular.Size20.TicketDiagonal())" Color="@Color.Neutral" />
+            <h3 class="panel-title">Active Tickets</h3>
+        </div>
+        <FluentButton Appearance="Appearance.Lightweight"
+                      IconStart="@(new Icons.Regular.Size16.Add())"
+                      OnClick="@(() => NavManager.NavigateTo("/tickets/new"))">
+            New
+        </FluentButton>
+    </div>
+
+    @* TICKET LIST *@
+    <div class="ticket-list">
+        @if (WState.Tickets != null && WState.Tickets.Any())
+        {
+            @foreach (var ticket in WState.Tickets.OrderByDescending(t => t.CreatedAt))
+            {
+                <div class="ticket-item">
+                    <div class="ticket-main">
+                        <div class="ticket-title">@ticket.Title</div>
+                        <div class="ticket-meta">@ticket.TicketNumber • @ticket.CustomerName</div>
+                    </div>
+                    <span class="prio-badge @ticket.Priority.ToLower()">
+                        @ticket.Priority
+                    </span>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="ticket-empty">
+                No active tickets found.
+            </div>
+        }
+    </div>
+
+    @* FOOTER *@
+    <div class="panel-footer">
+        <FluentButton Appearance="Appearance.Lightweight" Class="footer-btn" OnClick="@(() => NavManager.NavigateTo("/tickets"))">
+            Open Full Ticket Manager
+        </FluentButton>
+    </div>
+
+</FluentCard>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // LISTEN: Update this tile if tickets are added/deleted on other pages
+        WState.OnChange += Refresh;
+    }
+
+    private void Refresh()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        WState.OnChange -= Refresh;
+    }
+}

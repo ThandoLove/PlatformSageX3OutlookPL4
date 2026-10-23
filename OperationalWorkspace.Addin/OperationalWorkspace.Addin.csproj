@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Accelist.FluentValidation.Blazor" Version="4.0.0" />
+   
+    <PackageReference Include="FluentValidation" Version="12.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.11.5" />
+    <PackageReference Include="Radzen.Blazor" Version="12.1.5" />
+    
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OperationalWorkspaceApplication\OperationalWorkspaceApplication.csproj" />
+	  <ProjectReference Include="..\SharedProject\OperationalWorkspaceShared.csproj" />
+	  <ProjectReference Include="..\OperationalWorkspaceUI\OperationalWorkspaceUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="AddinState\" />
+  </ItemGroup>
+
+</Project>

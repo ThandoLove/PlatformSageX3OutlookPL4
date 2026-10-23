@@ -1,0 +1,26 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using OperationalWorkspaceApplication.DTOs
+@* FIX 1: Use the Alias to stop the Radzen/Fluent conflict *@
+@using FluentOrientation = Microsoft.FluentUI.AspNetCore.Components.Orientation
+
+<FluentCard Style="margin-bottom: 10px; padding: 12px; border-top: 4px solid #005A9E;">
+    <FluentStack Orientation="FluentOrientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Spacing="3">
+
+        @* The older Fluent UI package in use doesn't expose PersonaSize/PersonaStatus/StatusSize as top-level enums
+           across all package versions. Use the component's simpler properties (e.g., "Size" as string) or omit
+           the missing enums to avoid compilation errors. *@
+        <FluentPersona Name="@(Email?.SenderName ?? "Unknown Sender")"
+                       Size="32" />
+
+        <FluentStack Orientation="FluentOrientation.Vertical" Spacing="0">
+            <FluentLabel Typo="Typography.Header">@Email?.SenderName</FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; color: gray;">
+                @Email?.SenderEmail
+            </FluentLabel>
+        </FluentStack>
+    </FluentStack>
+</FluentCard>
+
+@code {
+    [Parameter] public EmailInsightDto? Email { get; set; }
+}

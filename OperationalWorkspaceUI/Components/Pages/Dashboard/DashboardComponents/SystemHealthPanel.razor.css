@@ -1,0 +1,129 @@
+﻿/* High-Density Fix for SystemHealthPanel - No Important Tags */
+.health-widget-card {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+    .health-widget-card .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        padding: 0;
+    }
+
+        .health-widget-card .panel-header h3 {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+    .health-widget-card .health-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .health-widget-card .status-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .health-widget-card .status-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2px;
+    }
+
+    .health-widget-card .status-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .health-widget-card .status-meta {
+        font-size: 10px;
+        color: #64748b;
+    }
+
+    .health-widget-card .status-pill {
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+
+    .health-widget-card .status-online {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .health-widget-card .status-warning {
+        background: #fef9c3;
+        color: #854d0e;
+    }
+
+    .health-widget-card .status-offline {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    .health-widget-card .pulse-dot {
+        width: 5px;
+        height: 5px;
+        background: #22c55e;
+        border-radius: 50%;
+        animation: sage-pulse 1.5s infinite;
+    }
+
+@keyframes sage-pulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 1;
+    }
+
+    70% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+}
+
+.health-widget-card .health-footer {
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+}
+
+.health-widget-card .refresh-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.health-widget-card .fluent-button-stealth-override {
+    height: 22px;
+    min-width: 22px;
+    padding: 0;
+    color: #64748b;
+}

@@ -1,0 +1,270 @@
+/* =========================================================================
+   MAIN APPLICATION SHELL
+   ========================================================================= */
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    background: #f1f5f9;
+    font-family: Inter, "Segoe UI", sans-serif;
+    box-sizing: border-box;
+}
+
+
+    /* =========================================================================
+   GLOBAL HEADER (UPDATED TO PREVENT ALIGNMENT BLEED OVERLAPPING)
+   ========================================================================= */
+
+    .app-container .global-header,
+    .app-container .layout-guard-header {
+        position: relative;
+        width: 100%;
+        height: 52px; /* ✅ FIXED FROM 48PX TO HARMONIZE STABLE VERTICAL SPACE BOUNDS WITH THE SAGE TOPBAR */
+        min-height: 52px;
+        flex: 0 0 52px;
+        box-sizing: border-box;
+        z-index: 10000;
+    }
+
+
+    /* =========================================================================
+   MAIN WORKSPACE
+   ========================================================================= */
+
+    .app-container .main-wrapper {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        flex: 1 1 auto;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        min-width: 0;
+        align-items: stretch;
+        overflow: visible;
+        box-sizing: border-box;
+        z-index: 1;
+    }
+
+
+    /* =========================================================================
+   SIDEBAR
+   ========================================================================= */
+
+    .app-container .sidebar-wrapper {
+        position: relative;
+        width: 240px;
+        min-width: 240px;
+        max-width: 240px;
+        height: 100%;
+        min-height: 0;
+        flex: 0 0 240px;
+        background: #112237;
+        border-right: 1px solid rgba(255, 255, 255, 0.06);
+        box-sizing: border-box;
+        overflow: visible;
+        z-index: 50000;
+        transition: width 0.2s cubic-bezier(.4, 0, .2, 1), min-width 0.2s cubic-bezier(.4, 0, .2, 1), max-width 0.2s cubic-bezier(.4, 0, .2, 1), flex-basis 0.2s cubic-bezier(.4, 0, .2, 1);
+    }
+
+
+        /* =========================================================================
+   COLLAPSED SIDEBAR
+   ========================================================================= */
+
+        .app-container .sidebar-wrapper.is-collapsed-active {
+            width: 64px;
+            min-width: 64px;
+            max-width: 64px;
+            flex-basis: 64px;
+            overflow: visible;
+            z-index: 50000;
+        }
+
+
+    /* =========================================================================
+   PAGE CONTENT
+   ========================================================================= */
+
+    .app-container .page-content {
+        position: relative;
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+        min-height: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #f1f5f9;
+        overflow: visible;
+        z-index: 1;
+    }
+
+
+    /* =========================================================================
+   CONTENT BODY
+   ========================================================================= */
+
+    .app-container .content-body {
+        position: relative;
+        flex: 1 1 auto;
+        width: 100%;
+        min-width: 0;
+        min-height: 0;
+        height: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 1;
+    }
+
+
+    /* =========================================================================
+   TASK PANE (UNIFIED STABILIZATION)
+   ========================================================================= */
+
+    .app-container:has(.taskpane-layout-root) {
+        height: 100vh;
+        min-height: 0;
+        overflow: visible;
+    }
+
+
+        .app-container:has(.taskpane-layout-root) .global-header,
+        .app-container:has(.taskpane-layout-root) .layout-guard-header {
+            height: 52px; /* ✅ FIXED FROM 44PX TO PREVENT TOPBAR CLIPPING ABUSE ON DUAL PATH LAUNCHES */
+            min-height: 52px;
+            flex-basis: 52px;
+            z-index: 10000;
+        }
+
+
+        .app-container:has(.taskpane-layout-root) .main-wrapper {
+            height: calc(100vh - 52px); /* ✅ ALIGNED SPACE PROPORTION VECTOR GRID SETUP */
+            min-height: 0;
+            overflow: visible;
+        }
+
+
+        .app-container:has(.taskpane-layout-root) .sidebar-wrapper {
+            width: 56px;
+            min-width: 56px;
+            max-width: 56px;
+            flex-basis: 56px;
+            height: 100%;
+            min-height: 0;
+            overflow: visible;
+            z-index: 50000;
+        }
+
+
+            .app-container:has(.taskpane-layout-root)
+            .sidebar-wrapper.is-collapsed-active {
+                width: 56px;
+                min-width: 56px;
+                max-width: 56px;
+                flex-basis: 56px;
+                overflow: visible;
+                z-index: 50000;
+            }
+
+
+        .app-container:has(.taskpane-layout-root) .page-content {
+            min-width: 0;
+            min-height: 0;
+            height: 100%;
+            overflow: visible;
+            z-index: 1;
+        }
+
+
+        .app-container:has(.taskpane-layout-root) .content-body {
+            padding: 8px;
+            min-height: 0;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1;
+        }
+
+
+    /* =========================================================================
+   TOAST
+   ========================================================================= */
+
+    .app-container .toast-notification,
+    .app-container .toast-container {
+        position: fixed;
+        z-index: 2147483000;
+    }
+
+
+/* =========================================================================
+   AUTHENTICATION / BOOT
+   ========================================================================= */
+
+.initial-app-boot-shroud {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient( 180deg, #15345c 0%, #102846 100% );
+    color: #ffffff;
+    font-family: Inter, "Segoe UI", sans-serif;
+    box-sizing: border-box;
+}
+
+
+.app-boot-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8aa6c8;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+
+.initial-app-boot-shroud .spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top: 3px solid #ffffff;
+    border-radius: 50%;
+    animation: layoutBootSpin 1s linear infinite;
+}
+
+
+@keyframes layoutBootSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================================
+   LOGIN
+   ========================================================================= */
+
+.app-container .secure-auth-landing-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+    background: #f3f2f1;
+}

@@ -1,0 +1,345 @@
+﻿/* =========================================================
+   PART 1: CENTRALIZED DESIGN SYSTEM TOKENS
+========================================================= */
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border: rgba(226, 232, 240, 0.6);
+    --border-dark: rgba(226, 232, 240, 0.7);
+    --surface: #ffffff;
+    --background: #f6f8fb;
+    --radius-sm: 10px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    --glass-background: rgba(255, 255, 255, 0.72);
+    --glass-blur: blur(10px);
+    --header-glass: rgba(255, 255, 255, 0.78);
+    --header-blur: blur(14px);
+}
+
+/* =========================================================
+   PART 2: UNIFIED VIEWPORT SYSTEM CHASSIS (🚀 ONE SCROLLER ONLY)
+========================================================= */
+.hub-viewport-lock {
+    height: auto; /* 🌟 FIXED: Allows the layout canvas to grow naturally vertically */
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* 🌟 FIXED: Forces the main page to host the ONLY vertical scroll track [INDEX] */
+    overflow-x: hidden;
+    background: var(--background);
+    font-family: Inter, "Segoe UI", sans-serif;
+    color: #1e293b;
+    box-sizing: border-box;
+}
+
+    /* =========================================================
+   PART 3: GLOBAL GLASSMORPHIC HEADER CHASSIS
+========================================================= */
+    .hub-viewport-lock .hub-header {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        background: var(--header-glass);
+        backdrop-filter: var(--header-blur);
+        -webkit-backdrop-filter: var(--header-blur);
+        border-bottom: 1px solid var(--border-dark);
+        flex-shrink: 0;
+        box-sizing: border-box;
+    }
+
+    .hub-viewport-lock .header-left,
+    .hub-viewport-lock .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .hub-viewport-lock .hub-header h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+    }
+
+    /* =========================================================
+   PART 4: MAIN FLUID GRID GRIDS & HEIGHT ELIMINATORS
+========================================================= */
+    .hub-viewport-lock .hub-main-layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr) 360px;
+        gap: 16px;
+        padding: 16px;
+        align-items: start; /* 🌟 FIXED: Allows each card panel to stretch fluidly based on its internal records [INDEX] */
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+/* 🚀 FIXED UX: Stripped out all nested panel scroll bars, height locks, and hidden overflow limits [INDEX] */
+.hub-main-layout .col-oversight,
+.hub-main-layout .col-board,
+.hub-main-layout .col-details {
+    min-height: auto;
+    height: auto;
+    border-radius: var(--radius-lg);
+    background: var(--glass-background);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    overflow: visible; /* 🌟 FIXED: Allows elements to remain fully visible during single master scrolls [INDEX] */
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   PART 5: SCROLLER ISOLATION CODES REMOVED
+========================================================= */
+.hub-main-layout .col-oversight {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    overflow: visible;
+}
+
+.hub-main-layout .col-board {
+    background: transparent;
+    border: none;
+    overflow: visible;
+}
+
+.hub-main-layout .col-details {
+    overflow: visible;
+    background: rgba(255, 255, 255, 0.82);
+    display: flex;
+    flex-direction: column;
+}
+
+.col-details .task-details-panel {
+    padding: 18px;
+    height: auto;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   PART 6: CONTEXT FLYOUT POPUPS (SCOPED POSITION CODES)
+========================================================= */
+.header-right .dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-wrapper .header-context-menu {
+    position: absolute;
+    top: 42px;
+    left: 0;
+    background: var(--surface);
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+    width: 180px;
+    z-index: 999;
+    padding: 6px 0;
+}
+
+    .dropdown-wrapper .header-context-menu.right-align {
+        left: auto;
+        right: 0;
+        width: 210px;
+    }
+
+.header-context-menu .menu-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #334155;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s ease-in-out;
+    white-space: nowrap;
+}
+
+    .header-context-menu .menu-item:hover {
+        background-color: #f1f5f9;
+        color: var(--primary);
+    }
+
+    .header-context-menu .menu-item.selected {
+        color: var(--primary);
+        background-color: #eff6ff;
+        font-weight: 600;
+    }
+
+/* =========================================================
+   PART 7: EXPANDABLE FILTER TRAYS
+========================================================= */
+.hub-viewport-lock .global-filter-expansion-tray {
+    background: var(--surface);
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 24px;
+    flex-shrink: 0;
+}
+
+.global-filter-expansion-tray .tray-inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.tray-inner .filter-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-cell label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.filter-cell select {
+    min-height: 32px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #334155;
+    background: var(--surface);
+    outline: none;
+    width: 160px;
+}
+
+.btn-ghost.filter-engaged {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* =========================================================
+   PART 8: BUTTON ACTIONS & TEXT LAYOUT PANELS
+========================================================= */
+.header-left .btn-new-task {
+    min-height: 36px;
+    padding: 0 14px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--primary);
+    color: var(--surface);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+    .header-left .btn-new-task:hover {
+        background: var(--primary-hover);
+    }
+
+.header-right .btn-ghost {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.7);
+    color: #475569;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+    .header-right .btn-ghost:hover {
+        background: var(--surface);
+    }
+
+.task-details-panel .details-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-shrink: 0;
+}
+
+.details-header .alert-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: #fef2f2;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* =========================================================
+   PART 9: MASTER AUTHORITATIVE SCROLLBAR SCOPE
+========================================================= */
+/* 🚀 FIXED WINDOW SCOPE: Binds exclusively to the root container framework layer to provide ONE single scroll track [INDEX] */
+.hub-viewport-lock::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.hub-viewport-lock::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 999px;
+}
+
+.hub-viewport-lock::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* =========================================================
+   PART 10: RESPONSIVE COLLAPSIBLE MEDIA BREAKPOINTS
+========================================================= */
+@media (max-width: 1600px) {
+    .hub-viewport-lock .hub-main-layout {
+        grid-template-columns: 240px minmax(0, 1fr) 340px;
+    }
+}
+
+@media (max-width: 1400px) {
+    .hub-viewport-lock .hub-main-layout {
+        grid-template-columns: 220px minmax(0, 1fr) 320px;
+        gap: 12px;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .hub-viewport-lock .hub-main-layout {
+        grid-template-columns: 200px minmax(0, 1fr);
+    }
+
+    .hub-main-layout .col-details {
+        display: none;
+    }
+}
+
+@media (max-width: 992px) {
+    .hub-viewport-lock .hub-main-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+    }
+
+    .hub-main-layout .col-oversight {
+        display: none;
+    }
+}

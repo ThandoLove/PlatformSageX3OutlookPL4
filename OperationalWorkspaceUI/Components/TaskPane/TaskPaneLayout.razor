@@ -1,0 +1,101 @@
+@inherits LayoutComponentBase
+
+@using Microsoft.AspNetCore.Components
+
+@using OperationalWorkspaceApplication.ApplicationState
+@using OperationalWorkspaceUI.Components.Shared
+@using OperationalWorkspaceUI.UIServices.System
+
+@inject AppStateContainer AppState
+@inject NavigationManager Nav
+@inject ModalService ModalService
+@inject AuthService AuthService
+@inject EventBus EventBus
+
+<div class="taskpane-layout-root">
+
+    <!-- TASK PANE HEADER -->
+    <header class="taskpane-header">
+        <Topbar />
+    </header>
+
+    <!-- TASK PANE BODY -->
+    <div class="taskpane-main-area">
+
+        <!-- COMPACT NAVIGATION -->
+        <aside class="taskpane-sidebar">
+            <Sidebar />
+        </aside>
+
+        <!-- PAGE CONTENT -->
+        <main class="taskpane-page-viewport">
+            <div class="taskpane-page-content">
+                @Body
+            </div>
+        </main>
+
+    </div>
+
+    <!-- AUTHENTICATION OVERLAY -->
+    @if (!AppState.IsAuthenticated)
+    {
+        <div class="taskpane-modal-security-shroud">
+
+            <div class="taskpane-modal-dialog-box">
+
+                <div class="modal-security-header-bar">
+                    <span class="modal-security-icon">🔒</span>
+                    <span class="modal-security-title">
+                        Security Authorization Check
+                    </span>
+                </div>
+
+                <div class="modal-form-content-wrap">
+                    <LoginForm OnAuthenticationSuccess="OnAuthenticationSuccessHandler" />
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+@code {
+
+    private bool _disposed;
+
+    private async Task OnAuthenticationSuccessHandler(
+        (string Token, string User, string Email) args)
+    {
+        if (_disposed)
+            return;
+
+        try
+        {
+            AppState.SetAuthentication(
+                args.Token,
+                args.User ?? "Operator",
+                args.Email ?? string.Empty);
+
+            await AuthService.InitializeAsync();
+
+            await InvokeAsync(StateHasChanged);
+
+            Nav.NavigateTo(
+                "/taskpane/workspace",
+                forceLoad: false,
+                replace: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"Task-pane authentication success handler error: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
+}

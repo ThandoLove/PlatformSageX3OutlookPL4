@@ -1,0 +1,58 @@
+﻿@if (IsVisible)
+{
+    <div class="banner @CssClass">
+        <div class="banner-content">
+            <span class="banner-icon">@Icon</span>
+            <span class="banner-message">@Message</span>
+        </div>
+
+        @if (Dismissible)
+        {
+            <button type="button" class="banner-close" @onclick="Close">×</button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public bool IsVisible { get; set; } = true;
+
+    // FIX: Renamed from OnClose to OnDismiss to match your parent page
+    [Parameter] public EventCallback OnDismiss { get; set; }
+    
+    [Parameter] public bool Dismissible { get; set; } = true;
+    [Parameter] public BannerType Type { get; set; } = BannerType.Error;
+
+    private string CssClass => Type switch
+    {
+        BannerType.Success => "banner-success",
+        BannerType.Warning => "banner-warning",
+        BannerType.Info => "banner-info",
+        _ => "banner-error"
+    };
+
+    private string Icon => Type switch
+    {
+        BannerType.Success => "✔",
+        BannerType.Warning => "⚠",
+        BannerType.Info => "ℹ",
+        _ => "✖"
+    };
+
+    private async Task Close()
+    {
+        IsVisible = false;
+
+        // FIX: Updated to invoke OnDismiss
+        if (OnDismiss.HasDelegate)
+            await OnDismiss.InvokeAsync();
+    }
+
+    public enum BannerType
+    {
+        Error,
+        Success,
+        Warning,
+        Info
+    }
+}
