@@ -1,11 +1,18 @@
 ﻿using FluentValidation;
 using OperationalWorkspaceApplication.DTOs;
+using System;
 using System.Text.RegularExpressions;
 
 namespace OperationalWorkspaceApplication.Validators;
 
 public class LoginRequestValidator : AbstractValidator<LoginRequestDto>
 {
+    // Compile and cache the Regex pattern globally with an explicit timeout to eliminate ReDoS vectors
+    private static readonly Regex UsernameRegex = new Regex(
+        @"^[a-zA-Z0-9_.]+$",
+        RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(100));
+
     public LoginRequestValidator()
     {
         // ==========================
@@ -28,13 +35,6 @@ public class LoginRequestValidator : AbstractValidator<LoginRequestDto>
             .Must(ContainLowercase).WithMessage("Password must contain at least one lowercase letter.")
             .Must(ContainDigit).WithMessage("Password must contain at least one number.")
             .Must(NotContainSpaces).WithMessage("Password cannot contain spaces.");
-
-        // ==========================
-        // CROSS-FIELD RULE (optional hardening)
-        // ==========================
-        RuleFor(x => x)
-            .Must(NoInjectionPatterns)
-            .WithMessage("Input contains invalid patterns.");
     }
 
     // ==========================
@@ -42,50 +42,30 @@ public class LoginRequestValidator : AbstractValidator<LoginRequestDto>
     // ==========================
     private bool BeValidUsername(string username)
     {
-        // Allows: letters, numbers, underscore, dot
-        return Regex.IsMatch(username, @"^[a-zA-Z0-9_.]+$");
+        if (string.IsNullOrWhiteSpace(username)) return false;
+
+        try
+        {
+            return UsernameRegex.IsMatch(username);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return false;
+        }
     }
 
     // ==========================
     // PASSWORD RULES
     // ==========================
     private bool ContainUppercase(string password)
-        => password.Any(char.IsUpper);
+        => !string.IsNullOrEmpty(password) && password.Any(char.IsUpper);
 
     private bool ContainLowercase(string password)
-        => password.Any(char.IsLower);
+        => !string.IsNullOrEmpty(password) && password.Any(char.IsLower);
 
     private bool ContainDigit(string password)
-        => password.Any(char.IsDigit);
+        => !string.IsNullOrEmpty(password) && password.Any(char.IsDigit);
 
     private bool NotContainSpaces(string password)
-        => !password.Contains(" ");
-
-    // ==========================
-    // BASIC INJECTION PROTECTION
-    // ==========================
-    private bool NoInjectionPatterns(LoginRequestDto dto)
-    {
-        if (dto.Username == null || dto.Password == null)
-            return false;
-
-        string input = dto.Username + dto.Password;
-
-        string[] bannedPatterns =
-        {
-            "--",
-            "';",
-            "/*",
-            "*/",
-            "xp_",
-            "drop ",
-            "select ",
-            "insert ",
-            "delete ",
-            "update "
-        };
-
-        return !bannedPatterns.Any(p =>
-            input.ToLower().Contains(p));
-    }
+        => !string.IsNullOrEmpty(password) && !password.Contains(" ");
 }
